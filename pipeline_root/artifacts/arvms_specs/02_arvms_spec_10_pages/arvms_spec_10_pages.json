@@ -1,0 +1,54 @@
+{
+  "source": {
+    "filename": "arvms_spec_10_pages.pdf",
+    "type": "pdf",
+    "sha256": "d4e5524b9cf5131539e0878b4c194fbfb9e6cbe128f44908780e8f6a8de736a8",
+    "page_count": 10
+  },
+  "pages": [
+    {
+      "page": 1,
+      "text": "Autonomous Robot Vacuum & Mop System\n(ARVMS)\nSystem Requirements Specification (SRS)\nVersion: 1.0\nAuthor: Jair Jimenez\nDate: 2026-02-19\n1. Introduction\n1.1 Purpose\nThis document specifies the system-level requirements for the Autonomous Robot\nVacuum & Mop System (ARVMS).\nThe purpose of ARVMS is to autonomously clean indoor residential environments\nby:\n• Vacuuming dry debris such as dust, hair, and particles\n• Mopping hard floor surfaces using controlled water dispensing\n• Navigating safely and efficiently within complex home layouts\n• Returning automatically to a charging dock when required\n• Providing remote configuration and monitoring through a mobile applica-\ntion\nThis document defines functional, safety, performance, hardware, software, and\ncybersecurity requirements.\n1.2 Scope\nThe scope of this document includes:\n• Autonomous navigation\n• Cleaning functionality\n• User interaction\n• Charging and docking\n• Safety mechanisms\n• Embedded software architecture\n• Diagnostics and maintainability\nThe scope excludes:\n• Outdoor operation\n• Industrial cleaning environments\n1\n"
+    },
+    {
+      "page": 2,
+      "text": "• Hazardous environments\n• Human transportation functions\n2. System Overview\n2.1 Product Description\nARVMS is a battery-powered autonomous mobile robot designed for residential\nindoor cleaning.\nThe system consists of:\n• Mobile cleaning robot unit\n• Charging and maintenance dock\n• Mobile application\n• Optional cloud backend services\nThe robot integrates sensing, computation, motion control, and cleaning mecha-\nnisms in a single embedded system.\n2.2 Operating Environment\nThe system shall operate under the following environmental conditions:\n• Indoor residential homes\n• Floor types including tile, laminate, hardwood, and low to medium pile\ncarpets\n• Ambient temperature range: 5°C to 40°C\n• Relative humidity: 10% to 80% non-condensing\n• Typical residential lighting conditions\nThe system shall not require external markers for navigation.\n2.3 System Constraints\n• Maximum robot diameter: 35 cm\n• Maximum robot height: 10 cm\n• Total weight: less than 6 kg\n• Battery type: rechargeable lithium based battery\n• Wireless connectivity: IEEE 802.11 b/g/n\n2\n"
+    },
+    {
+      "page": 3,
+      "text": "3. Functional Requirements\n3.1 Navigation and Mapping\nSYS-FUNC-001\nThe system shall generate a two-dimensional occupancy grid map using SLAM.\nSYS-FUNC-002\nThe system shall localize itself within ±5 cm positional accuracy and ±3 degrees\nangular accuracy.\nSYS-FUNC-003\nThe system shall update the map in real time during operation.\nSYS-FUNC-004\nThe system shall detect and avoid static and dynamic obstacles.\nSYS-FUNC-005\nThe system shall detect cliffs or stairs using downward facing sensors.\nSYS-FUNC-006\nThe system shall support multi-floor map storage of at least 3 independent maps.\nSYS-FUNC-007\nThe system shall support no-go zones defined by the user.\nSYS-FUNC-008\nThe system shall compute optimized cleaning paths to minimize redundant\ncoverage.\n3.2 Motion Control\nSYS-FUNC-020\nThe system shall implement differential drive control.\nSYS-FUNC-021\nThe system shall support maximum linear speed of 0.5 meters per second.\n3\n"
+    },
+    {
+      "page": 4,
+      "text": "SYS-FUNC-022\nThe system shall support maximum rotation speed of 180 degrees per second.\nSYS-FUNC-023\nThe system shall maintain straight line tracking error below 3 cm over 1 meter.\n3.3 Vacuuming\nSYS-FUNC-030\nThe system shall generate suction power greater than or equal to 5000 Pascal.\nSYS-FUNC-031\nThe system shall provide at least three suction levels.\nSYS-FUNC-032\nThe system shall automatically increase suction when carpet is detected.\nSYS-FUNC-033\nThe system shall include a rotating main brush and at least one side brush.\nSYS-FUNC-034\nThe system shall detect dustbin removal and prevent vacuum motor activation.\n3.4 Mopping\nSYS-FUNC-040\nThe system shall provide electronically controlled water dispensing.\nSYS-FUNC-041\nThe system shall support at least three water flow levels.\nSYS-FUNC-042\nThe system shall automatically lift the mop module by at least 5 mm when\ncarpet is detected.\n4\n"
+    },
+    {
+      "page": 5,
+      "text": "SYS-FUNC-043\nThe system shall detect empty water tank conditions.\nSYS-FUNC-044\nThe system shall prevent water dispensing when tank is empty.\n3.5 Docking and Charging\nSYS-FUNC-050\nThe system shall return to dock when battery level falls below 20 percent.\nSYS-FUNC-051\nThe system shall autonomously align with the docking station.\nSYS-FUNC-052\nThe system shall resume cleaning from last position after charging.\nSYS-FUNC-053\nThe system shall support full recharge within 4 hours.\n3.6 User Interaction\nSYS-FUNC-060\nThe system shall provide a mobile application interface.\nSYS-FUNC-061\nThe system shall allow room specific cleaning selection.\nSYS-FUNC-062\nThe system shall support scheduled cleaning tasks.\nSYS-FUNC-063\nThe system shall generate cleaning reports including area cleaned, time spent,\nand battery usage.\n5\n"
+    },
+    {
+      "page": 6,
+      "text": "SYS-FUNC-064\nThe system shall provide push notifications for faults and maintenance events.\n4. Safety Requirements\n4.1 Mechanical Safety\nSYS-SAFE-001\nThe system shall stop drive motors within 100 ms if lifted.\nSYS-SAFE-002\nThe system shall limit brush torque to safe levels.\nSYS-SAFE-003\nThe system shall prevent operation if dustbin is removed.\nSYS-SAFE-004\nThe system shall limit maximum collision force to prevent furniture damage.\n4.2 Electrical Safety\nSYS-SAFE-010\nThe system shall prevent battery overcharge and deep discharge.\nSYS-SAFE-011\nThe system shall monitor motor temperatures.\nSYS-SAFE-012\nThe system shall shut down safely in case of critical battery fault.\n5. Performance Requirements\nSYS-PERF-001\nCleaning coverage efficiency shall be greater than or equal to 95 percent per\nroom.\n6\n"
+    },
+    {
+      "page": 7,
+      "text": "SYS-PERF-002\nMaximum noise level shall not exceed 65 dB in standard mode.\nSYS-PERF-003\nOperating time shall be at least 120 minutes in standard mode.\nSYS-PERF-004\nMap generation shall complete within 10 minutes for a 50 square meter area.\nSYS-PERF-005\nObstacle detection latency shall not exceed 50 ms.\n6. Cybersecurity Requirements\nSYS-SEC-001\nAll communication shall use TLS 1.2 or higher.\nSYS-SEC-002\nThe system shall implement secure boot.\nSYS-SEC-003\nFirmware updates shall be digitally signed.\nSYS-SEC-004\nThe system shall require user authentication for remote control.\nSYS-SEC-005\nThe system shall protect stored WiFi credentials using encryption.\n7. Hardware Requirements\n7.1 Sensors\nSYS-HW-001\nThe system shall include a lidar or vision based navigation sensor.\n7\n"
+    },
+    {
+      "page": 8,
+      "text": "SYS-HW-002\nThe system shall include at least four cliff detection sensors.\nSYS-HW-003\nThe system shall include wheel encoders.\nSYS-HW-004\nThe system shall include an inertial measurement unit.\nSYS-HW-005\nThe system shall include a water level sensor.\nSYS-HW-006\nThe system shall include a bumper sensor array.\n7.2 Actuators\nSYS-HW-010\nThe system shall include two independent drive motors.\nSYS-HW-011\nThe system shall include a vacuum motor.\nSYS-HW-012\nThe system shall include a water pump.\nSYS-HW-013\nThe system shall include a mop lift actuator.\nSYS-HW-014\nThe system shall include a main brush motor and at least one side brush motor.\n8\n"
+    },
+    {
+      "page": 9,
+      "text": "8. Software Architecture Requirements\nSYS-SW-001\nThe system shall implement a layered architecture consisting of application layer,\nmiddleware layer, and hardware abstraction layer.\nSYS-SW-002\nThe system shall implement a real time operating system.\nSYS-SW-003\nThe system shall separate navigation, motion control, and cleaning logic into\nindependent modules.\nSYS-SW-004\nThe system shall log diagnostic events with timestamps.\nSYS-SW-005\nThe system shall support over the air firmware updates.\n9. System States\nThe system shall implement the following high level states:\n• Idle\n• Mapping\n• Cleaning\n• Spot Cleaning\n• Docking\n• Charging\n• Paused\n• Error\n• Maintenance Mode\nState transitions shall be deterministic and logged.\n10. Diagnostics and Maintainability\nSYS-DIAG-001\nThe system shall log all detected faults.\n9\n"
+    },
+    {
+      "page": 10,
+      "text": "SYS-DIAG-002\nThe system shall support factory test mode.\nSYS-DIAG-003\nThe system shall provide remote diagnostics via mobile app.\nSYS-DIAG-004\nThe system shall provide error codes for user display.\nSYS-DIAG-005\nThe system shall support firmware version reporting.\n11. Assumptions and Constraints\n• Indoor use only.\n• WiFi required for full feature set.\n• User maintenance required for water refill and dustbin emptying.\n• The system shall not operate outdoors.\n• The system shall not be used in explosive or hazardous environments.\nEnd of Document\n10\n"
+    }
+  ],
+  "warnings": [
+    "detected_ligatures: 0",
+    "line_hyphenation_present: 2"
+  ]
+}

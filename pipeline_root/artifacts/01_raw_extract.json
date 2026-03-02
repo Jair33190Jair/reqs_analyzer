@@ -1,0 +1,19 @@
+{
+  "source": {
+    "filename": "spec.pdf",
+    "type": "pdf",
+    "sha256": "<hash>",
+    "page_count": 6
+  },
+  "test": {
+    "name": "jair"
+  },
+  "pages": [
+    { "page": 1, "text": "..." },
+    { "page": 2, "text": "..." }
+  ],
+  "warnings": [
+    "detected_ligatures",
+    "line_hyphenation_present"
+  ]
+}

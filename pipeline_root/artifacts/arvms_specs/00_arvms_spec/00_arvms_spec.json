@@ -1,0 +1,38 @@
+{
+  "source": {
+    "filename": "arvms_spec.pdf",
+    "type": "pdf",
+    "sha256": "5b5d72842ecfe7a9abb12aeb6c187125ce2c0bbb9b5d983ff84f6d70993a9635",
+    "page_count": 6
+  },
+  "pages": [
+    {
+      "page": 1,
+      "text": "Autonomous\nRobot\nVacuum\n&\nMop\nSystem\n(ARVMS)\nSystem Requirements Specification (SRS)\nVersion: 1.0\nAuthor: Jair Jimenez\nDate: 2026-02-19\n1. Introduction\n1.1 Purpose\nThis document specifies the system-level requirements for the Autonomous\nRobot Vacuum & Mop System (ARVMS).\nThe system shall autonomously clean indoor residential environments by: - Vac-\nuuming dry debris - Mopping hard floors - Navigating safely and eﬀiciently -\nDocking automatically for charging\n2. System Overview\n2.1 Product Description\nARVMS is a mobile embedded system consisting of:\n• Mobile cleaning robot\n• Charging & maintenance dock\n• Mobile application\n• Optional cloud backend\n2.2 Operating Environment\nThe system shall operate in: - Indoor residential homes - Hard floors (tile,\nlaminate, wood) - Low/medium pile carpets - Ambient temperature: 5°C –\n40°C - Humidity: 10% – 80%\n1\n"
+    },
+    {
+      "page": 2,
+      "text": "3. Functional Requirements\n3.1 Navigation\nSYS-FUNC-001\nThe system shall autonomously generate a 2D indoor map using SLAM.\nSYS-FUNC-002\nThe system shall localize itself with ±5 cm accuracy.\nSYS-FUNC-003\nThe system shall avoid static and dynamic obstacles in real-time.\nSYS-FUNC-004\nThe system shall detect cliffs or stairs and prevent falling.\nSYS-FUNC-005\nThe system shall support multi-room mapping and segmentation.\n3.2 Vacuuming\nSYS-FUNC-010\nThe system shall generate suction power >= 5000 Pa.\nSYS-FUNC-011\nThe system shall automatically adjust suction based on detected floor type.\nSYS-FUNC-012\nThe system shall detect carpet surfaces.\n3.3 Mopping\nSYS-FUNC-020\nThe system shall provide electronically controlled water dispensing.\nSYS-FUNC-021\nThe system shall support adjustable water flow levels (Low/Medium/High).\n2\n"
+    },
+    {
+      "page": 3,
+      "text": "SYS-FUNC-022\nThe system shall lift the mop automatically when carpet is detected.\nSYS-FUNC-023\nThe system shall detect empty water tank conditions and notify the user.\n3.4 Docking\nSYS-FUNC-030\nThe system shall automatically return to the charging dock when battery <\n20%.\nSYS-FUNC-031\nThe system shall resume cleaning after recharge.\nSYS-FUNC-032\nThe system shall support automatic charging.\n3.5 User Interaction\nSYS-FUNC-040\nThe system shall support cleaning scheduling.\nSYS-FUNC-041\nThe system shall allow room-specific cleaning selection.\nSYS-FUNC-042\nThe system shall provide cleaning reports (area, duration, battery usage).\n4. Safety Requirements\n4.1 Mechanical Safety\nSYS-SAFE-001\nThe system shall stop all drive motors within 100 ms if lifted.\n3\n"
+    },
+    {
+      "page": 4,
+      "text": "SYS-SAFE-002\nThe system shall limit brush torque to prevent injury.\nSYS-SAFE-003\nThe system shall prevent operation if the dustbin is removed.\n4.2 Electrical Safety\nSYS-SAFE-010\nThe system shall prevent battery overcharge and deep discharge.\nSYS-SAFE-011\nThe system shall monitor motor temperature and prevent overheating.\n5. Performance Requirements\nSYS-PERF-001\nCleaning coverage eﬀiciency shall be >= 95%.\nSYS-PERF-002\nMaximum noise level shall be <= 65 dB.\nSYS-PERF-003\nOperating time shall be >= 120 minutes.\nSYS-PERF-004\nCharging time shall be <= 4 hours.\n6. Cybersecurity Requirements\nSYS-SEC-001\nAll external communications shall use TLS 1.2 or higher.\n4\n"
+    },
+    {
+      "page": 5,
+      "text": "SYS-SEC-002\nThe system shall support secure OTA firmware updates.\nSYS-SEC-003\nThe system shall implement secure boot with firmware signature validation.\n7. Hardware Requirements\n7.1 Sensors\nSYS-HW-001\nThe system shall include a LIDAR or vision-based navigation sensor.\nSYS-HW-002\nThe system shall include cliff detection sensors.\nSYS-HW-003\nThe system shall include wheel encoders.\nSYS-HW-004\nThe system shall include an IMU.\nSYS-HW-005\nThe system shall include a water level sensor.\n7.2 Actuators\nSYS-HW-010\nThe system shall include two independent drive motors.\nSYS-HW-011\nThe system shall include a vacuum motor.\nSYS-HW-012\nThe system shall include a water pump.\n5\n"
+    },
+    {
+      "page": 6,
+      "text": "SYS-HW-013\nThe system shall include a mop lift actuator.\n8. Software Architecture Requirements\nSYS-SW-001\nThe system shall implement a layered software architecture:\n• Application Layer\n• Middleware Layer\n• Hardware Abstraction Layer (HAL)\nSYS-SW-002\nThe system shall support modular firmware updates.\nSYS-SW-003\nThe system shall log diagnostic events with timestamps.\n9. System States\nThe system shall implement the following high-level states:\n• Idle\n• Mapping\n• Cleaning\n• Dockin\n6\n"
+    }
+  ],
+  "warnings": [
+    "detected_ligatures: 2",
+    "line_hyphenation_present: 1"
+  ]
+}

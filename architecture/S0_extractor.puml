@@ -1,0 +1,66 @@
+@startuml S0_extractor_activity
+!define sub_modules_path ../../../../
+!include sub_modules_path/projects/templates/plantuml/activity_diagram.puml
+'!define show_constraints
+
+title S0 Extractor — Activity Diagram
+
+
+start 
+$INPUT :(1) receive PDF;
+!ifdef show_constraints
+note left
+  Constraint:
+  - Input Format: .pdf extension
+  - Input Path: inputs/<project_name>/<document_name>.pdf
+end note
+!endif
+if (validate path and .pdf extension) then (invalid)
+  stop
+endif
+
+:(2) extract text from PDF\n       → extracted text;
+if (check document is within processing limits) then (no)
+  stop
+endif
+!ifdef show_constraints
+note left
+  Constraint:
+  - Max page count: 10
+  - Max char count: 30,000
+end note
+!endif
+
+:(3) compute hash from pdf\n      → hash;
+
+:(4) detect format warnings from extracted text\n      → format warnings;
+!ifdef show_constraints
+note left
+  Constraint:
+  - Warnings format: <warning_type>: <count>
+  - Warning types: ligatures, hyphenations
+end note
+!endif
+
+:(5) assemble pdf metadata, extracted text and warnings\n      → result;
+if (validate result against schema) then (invalid)
+  stop
+endif
+!ifdef show_constraints
+note left
+  Constraint:
+  - Result schema: See pipeline_root/artifacts/01_raw_extract.json
+end note
+!endif
+
+$OUTPUT:(6) write result in output file\n      → return output path;
+!ifdef show_constraints
+note left
+  Constraint:
+  - Output path: artifacts/<project_name>/<document_name>.json
+  (i) project_name and document_name are derived from input PDF path
+end note
+!endif
+stop
+
+@enduml
