@@ -7,7 +7,7 @@ title S0 Extractor — Activity Diagram
 
 
 start 
-$INPUT :(1) receive PDF;
+$INPUT :(1) receive pdf;
 !ifdef show_constraints
 note left
   Constraint:
@@ -42,7 +42,7 @@ note left
 end note
 !endif
 
-:(5) assemble pdf metadata, extracted text and warnings\n      → result;
+:(5) assemble pdf metadata,\n extracted text and warnings\n      → result;
 if (validate result against schema) then (invalid)
   stop
 endif

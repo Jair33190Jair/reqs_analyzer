@@ -1,0 +1,62 @@
+@startuml S1_normalizer_activity
+!define sub_modules_path ../../../../
+!include sub_modules_path/projects/templates/plantuml/activity_diagram.puml
+'!define show_constraints
+
+title S1 Normalizer — Activity Diagram
+
+
+start 
+$INPUT :(1) receive extracted json;
+!ifdef show_constraints
+note left
+  Constraint:
+  - Input Format: reqs_analyzer/pipeline_root/artifacts/01_raw_extract.json
+end note
+!endif
+
+:(2) dehyphenate and replace ligatures from text\n       → cleaned text;
+
+:(3) strip headers and footers from text\n      → stripped text;
+
+:(4) detect req id pattern via LLM\n      → req id pattern;
+!ifdef show_constraints
+note left
+  Constraint:
+  - Ensure samle does not contain empty lines
+  - Max sample size for LLM: min(120 lines, 3 pages) 
+end note
+!endif
+
+:(5) join text lines,\n extracted text and warnings\n      → result;
+!ifdef show_constraints
+note left
+  Constraint:
+  - It should put together lines that were split in the middle (e.g. by pdf extracting) but
+    but avoid joining lines that must stay separate (e.g. req IDs, items list, etc.)
+end note
+!endif
+
+:(6) assemble normalization results ,\n extracted text and warnings\n      → result;
+if (validate result against schema) then (invalid)
+  stop
+endif
+!ifdef show_constraints
+note left
+  Constraint:
+  - It should put together lines that were split in the middle (e.g. by pdf extracting) but
+    but avoid joining lines that must stay separate (e.g. req IDs, items list, etc.)
+end note
+!endif
+
+$OUTPUT:(7) write result in output file\n      → return output path;
+!ifdef show_constraints
+note left
+  Constraint:
+  - Output path: artifacts/<project_name>/<document_name>.json
+  (i) project_name and document_name are derived from input PDF path
+end note
+!endif
+stop
+
+@enduml
