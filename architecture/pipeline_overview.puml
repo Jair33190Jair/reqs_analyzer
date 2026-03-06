@@ -22,7 +22,7 @@ end note
 
 : (S1) Normalizer
   fix ligatures, dehyphenate, join soft lines,
-  strip noise, structure respecting req_id_pattern;
+  strip noise, structure respecting item_id_pattern;
 !ifdef show_constraints
 note right
   Constraints:

@@ -30,8 +30,8 @@ _DETECT_REQID_SYSTEM = (
 )
 
 
-def detect_req_id_pattern(pages: list[dict]) -> re.Pattern:
-    """Sample lines from the first 3 pages and ask the LLM to infer the req ID pattern."""
+def detect_item_id_pattern(pages: list[dict]) -> re.Pattern:
+    """Sample lines from the first 3 pages and ask the LLM to infer the item ID pattern."""
     sample_lines = []
     for page in pages[:3]:
         for ln in page["text"].split('\n'):
@@ -56,7 +56,7 @@ def detect_req_id_pattern(pages: list[dict]) -> re.Pattern:
         if pattern_str == "NONE":
             raise ValueError("LLM could not identify a req ID pattern.")
         compiled = re.compile(pattern_str, re.IGNORECASE)
-        logging.info(f"LLM detected req ID pattern: {pattern_str}")
+        logging.info(f"LLM detected item ID pattern: {pattern_str}")
         return compiled
     except re.error:
         raise ValueError(f"LLM returned invalid regex '{pattern_str}'.")
@@ -71,12 +71,12 @@ def _clean_text(text: str) -> str:
     return text
 
 
-def _soft_join(text: str, req_id_pattern: re.Pattern) -> str:
+def _soft_join(text: str, item_id_pattern: re.Pattern) -> str:
     """
     Join line N to line N+1 with a space when:
       - line N does not end in .  ;  :
       - line N+1 starts with a lowercase letter
-      - line N is not a standalone requirement ID
+      - line N is not a standalone item ID
 
     This should be very conservative and only join lines where it is certain they belong together.
     """
@@ -92,8 +92,8 @@ def _soft_join(text: str, req_id_pattern: re.Pattern) -> str:
                 and nxt
                 and not re.search(r'[.;:]\s*$', cur)
                 and re.match(r'^[a-z]', nxt) "Only if next word starts with lowercase"
-                and not req_id.match(cur.strip())
-                and not req_id.match(nxt.strip())
+                and not item_id_pattern.match(cur.strip())
+                and not item_id_pattern.match(nxt.strip())
             )
             if can_join:
                 out.append(cur + ' ' + nxt)
@@ -139,12 +139,12 @@ def _strip_headers_footers(pages: list[dict]) -> list[dict]:
 def normalize(raw: dict, source_ref: str) -> dict:
     # clean once, use everywhere
     cleaned_pages = [{"page": p["page"], "text": _clean_text(p["text"])} for p in raw["pages"]]
-    # LLM detects the req ID pattern for identifying requirements
+    # LLM detects the item ID pattern for identifying requirements
     stripped_pages = _strip_headers_footers(cleaned_pages)
-    req_id_pattern = detect_req_id_pattern(stripped_pages)
+    item_id_pattern = detect_item_id_pattern(stripped_pages)
     norm_pages = []
     for p in stripped_pages:
-        text = _soft_join(p["text"], req_id_pattern)
+        text = _soft_join(p["text"], item_id_pattern)
         norm_pages.append({"page": p["page"], "text": text})
     return {
         "source_ref": source_ref,

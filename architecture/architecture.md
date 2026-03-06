@@ -130,7 +130,7 @@ Reduce token waste and stabilize downstream parsing.
     { "page": 1, "text": "..." }
   ],
   "structural_patterns": {
-    "req_id_pattern": "<regex>",
+    "item_id_pattern": "<regex>",
     "section_pattern": "<regex>"
   }
 }
@@ -188,9 +188,9 @@ Avoid wasting money on broken input.
 {
   "doc_id": "auto_generated",
   "checks": {
-    "req_id_count": 42,
-    "unique_req_id_count": 42,
-    "duplicate_req_ids": [],
+    "item_id_count": 42,
+    "unique_item_id_count": 42,
+    "duplicate_item_ids": [],
     "sections_count": 11,
     "unique_section_count": 11,
     "duplicate_sections": [],
@@ -261,7 +261,7 @@ Schema: `spec.schema.v1`
   },
   "requirements": [
     {
-      "req_id": "SYS-FUNC-001",
+      "item_id": "SYS-FUNC-001",
       "kind": "functional",
       "content": "...",
       "section_id": "3.1",
@@ -307,7 +307,7 @@ Schema: `analysis.schema.v1`
   "issues": [
     {
       "issue_id": "ISS-0001",
-      "req_id": "SYS-FUNC-002",
+      "item_id": "SYS-FUNC-002",
       "category": "verifiability",
       "severity": "medium",
       "message": "...",
@@ -339,7 +339,7 @@ Schema: `analysis.schema.v1`
 
 ## Analyzer Rules
 
-* Each issue must reference a req_id or section_id
+* Each issue must reference an item_id or section_id
 * Provide concrete suggested fix
 * No generic advice
 * Keep concise
