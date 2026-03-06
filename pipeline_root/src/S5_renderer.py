@@ -1,3 +1,4 @@
+# See: ../../architecture/architecture_v1.md
 # TODO: Not yet implemented — planned for v1
 # Stage 5 — Renderer
 #

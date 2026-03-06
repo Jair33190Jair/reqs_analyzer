@@ -9,20 +9,24 @@ The fastest path to value is end-to-end validation, not stage-by-stage perfectio
 ## Phase 0 — Architecture baseline (one-time, before coding)
 > Design is done. One diagram to capture it, then freeze.
 
-- [ ] **0.0** `architecture/pipeline_overview.puml` — one diagram showing all 6 stages
+- [x] **0.0** `architecture/pipeline_overview.puml` — one diagram showing all 6 stages
       and the JSON artifact between each (e.g. S0 → `00_raw_extract.json` → S1).
       This is the single source of truth. Updated only if a stage interface changes.
-      Each stage file gets a one-line header comment: `# See: plan_v1.md §4`
+      Each stage file gets a one-line header comment: `# See: architecture_v1.md`
 
 ---
 
-## Phase 1 — Complete the stubs (S2, S4, S5)
-> S0 and S1 are substantial. S2, S4, S5 are ~14 lines each — finish them.
+## Phase 1 — Implement all pipeline stages (S0–S5)
+> Nothing is implemented yet. Build each stage in pipeline order.
+> Stage specs: `architecture_v1.md`
 
-- [ ] **1.1** `S2_preflight.py` — implement gatekeeper logic per `plan_v1.md §6`
-- [ ] **1.2** `S4_llm_analyzer.py` — implement analyzer call per `plan_v1.md §8`
-- [ ] **1.3** `S5_renderer.py` — implement Jinja2 HTML report per `plan_v1.md §9`
-- [ ] **1.4** Decide invocation strategy: how are stages chained?
+- [x] **1.1** `S0_extractor.py` — PDF ingestion, page/char limit enforcement
+- [x] **1.2** `S1_normalizer.py` — ligature replacement, dehyphenation, item ID preservation
+- [ ] **1.3** `S2_preflight.py` — gatekeeper logic (ID count, duplicate detection, score threshold)
+- [ ] **1.4** `S3_llm_chunker.py` — cheap llm chunked text for LLM context limits
+- [ ] **1.5** `S4_llm_analyzer.py` — expensive LLM analyzer call and response parsing
+- [ ] **1.6** `S5_renderer.py` — Jinja2 HTML report generation
+- [ ] **1.7** Decide invocation strategy: how are stages chained?
   Options: a) shell script, b) Python `run_pipeline.py`, c) manual per-stage
   → write the decision down and implement it
 
@@ -55,7 +59,7 @@ The fastest path to value is end-to-end validation, not stage-by-stage perfectio
 **Deterministic stages (S0, S1, S2) — unit tests worth writing:**
 - [ ] **4.1** S0: page limit, char limit, bad extension, file not found
   → S0 test plan already exists and passes manually — automate it with pytest
-  → Each test file header: `# Acceptance criteria: plan_v1.md §4`
+  → Each test file header: `# Acceptance criteria: architecture_v1.md`
 - [ ] **4.2** S1: ligature replacement, dehyphenation, req ID preservation
 - [ ] **4.3** S2: ID count, duplicate detection, score threshold gate
 
@@ -81,11 +85,11 @@ The fastest path to value is end-to-end validation, not stage-by-stage perfectio
 
 - [ ] **6.1** Linter (ruff or flake8) — zero warnings across all 6 stage files
 - [ ] **6.2** Type hints consistent across all stages
-- [ ] **6.3** Architecture↔code check: every stage in `plan_v1.md` has a matching file
+- [ ] **6.3** Architecture↔code check: every stage in `architecture_v1.md` has a matching file
        and its one-line header comment points to the right section
 - [ ] **6.4** Every JSON schema referenced in the architecture exists on disk
 - [ ] **6.5** `pipeline_overview.puml` still matches actual stage interfaces
-- [ ] **6.6** `plan_v1.md` Definition of Done checklist verified against real output
+- [ ] **6.6** `architecture_v1.md` Definition of Done checklist verified against real output
 
 ---
 

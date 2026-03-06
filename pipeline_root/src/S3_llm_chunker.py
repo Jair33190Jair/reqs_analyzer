@@ -1,3 +1,4 @@
+# See: ../../architecture/architecture_v1.md
 import os
 import json
 import anthropic

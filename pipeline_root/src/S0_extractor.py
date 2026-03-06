@@ -1,3 +1,4 @@
+# See: ../../architecture/architecture_v1.md
 import fitz
 import json
 import hashlib
@@ -9,7 +10,7 @@ from pathlib import Path
 
 # --- Configuration ---
 ROOT_DIR = Path(__file__).parent.parent
-SCHEMA_PATH = ROOT_DIR / "schemas" / "raw_extract.schema.v1.json"
+SCHEMA_PATH = ROOT_DIR / "schemas" / "00_raw_extract.schema.v1.json"
 INPUT_DIR   = ROOT_DIR / "input"
 OUTPUT_DIR  = ROOT_DIR / "artifacts"
 MAX_PAGES   = 10
