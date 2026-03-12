@@ -31,68 +31,11 @@ _DETECT_PATTERNS_SYSTEM = (
     "2. heading: section or chapter heading lines (e.g. '1. Introduction', '3.2.1 Scope', "
     "'CHAPTER 1 - Overview'). The regex must match when the ENTIRE line is the heading "
     "(include ^ and $ anchors).\n"
-    "Reply with ONLY a JSON object with keys 'item_id' and 'heading', each a valid Python "
-    "regex string or the word NONE if the pattern cannot be identified.\n"
-    'Example: {"item_id": "^[A-Z]+-[0-9]+$", "heading": "^[0-9]+(\\.[0-9]+)*\\.?\\s+\\S.*$"}'
+    "Reply with ONLY a JSON object with keys 'item_id' and 'heading', "
+    "each a valid regex JSON-encoded string (escape backslashes as \\\\), "
+    'or "NONE" if the pattern cannot be identified.\n'
+    'Example: {"item_id": "^[A-Z]+-[0-9]+$", "heading": "^[0-9]+([.][0-9]+)*[.]?[ ]+[^ ].*$"}'
 )
-
-
-
-def detect_patterns(pages: list[dict]) -> tuple[re.Pattern, re.Pattern | None]:
-    """Sample lines from the first 3 pages and ask the LLM to infer the item ID and heading patterns.
-
-    Returns:
-        (item_id_pattern, heading_pattern) — heading_pattern is None if the LLM replied NONE.
-    """
-    sample_lines = []
-    for page in pages[:3]:
-        for ln in page["text"].split('\n'):
-            """By default, function strips whitespaces at beginning and end of the line
-            This way, only non-empty lines are kept in the sample => Save tokens and avoid confusing
-            the LLM"""
-            s = ln.strip()
-            if s:
-                sample_lines.append(s)
-
-    sample = '\n'.join(sample_lines[:120])
-
-    raw_response = ""
-    try:
-        client = anthropic.Anthropic()
-        message = client.messages.create(
-            model="claude-haiku-4-5-20251001",
-            max_tokens=300,
-            system=_DETECT_PATTERNS_SYSTEM,
-            messages=[{"role": "user", "content": f"Lines:\n{sample}"}],
-        )
-        raw_response = message.content[0].text.strip()
-        data = json.loads(raw_response)
-
-        item_id_str = data.get("item_id", "NONE")
-        heading_str = data.get("heading", "NONE")
-
-        if item_id_str == "NONE":
-            raise ValueError("LLM could not identify an item ID pattern.")
-        item_id_pattern = re.compile(item_id_str, re.IGNORECASE)
-        logging.info(f"LLM detected item ID pattern: {item_id_str}")
-
-        heading_pattern = None
-        if heading_str != "NONE":
-            heading_pattern = re.compile(heading_str, re.IGNORECASE)
-            logging.info(f"LLM detected heading pattern: {heading_str}")
-        else:
-            logging.info("LLM could not identify a heading pattern; headings will not be detected.")
-
-        return item_id_pattern, heading_pattern
-
-    except (json.JSONDecodeError, KeyError):
-        raise ValueError(f"LLM returned unparseable response: '{raw_response}'.")
-    except re.error as exc:
-        raise ValueError(f"LLM returned invalid regex: {exc}.")
-    except ValueError:
-        raise
-    except Exception as e:
-        raise ValueError(f"LLM call failed: {e}.")
 
 def _clean_text(text: str) -> str:
     """Remove soft line-break hyphens: word-\nword → wordword."""
@@ -134,18 +77,78 @@ def _soft_join(text: str, item_id_pattern: re.Pattern, heading_pattern: re.Patte
                 and not is_structural
             )
             if can_join:
-                out.append(cur + ' ' + nxt)
-                i += 2
+                lines[i] = cur + ' ' + nxt
+                del lines[i + 1]
                 continue
         out.append(cur)
         i += 1
     return '\n'.join(out)
 
 
+def _detect_patterns(pages: list[dict]) -> tuple[re.Pattern, re.Pattern | None]:
+    """Sample lines from 3 pages around the middle of the document and ask the LLM to infer the item ID and heading patterns.
+
+    Returns:
+        (item_id_pattern, heading_pattern) — heading_pattern is None if the LLM replied NONE.
+    """
+    mid = len(pages) // 2
+    sample_lines = []
+    for page in pages[max(0, mid - 1):mid + 2]:
+        for ln in page["text"].split('\n'):
+            s = ln.strip()
+            if s:
+                sample_lines.append(s)
+
+    sample = '\n'.join(sample_lines[:120])
+
+    raw_response = ""
+    try:
+        client = anthropic.Anthropic()
+        message = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=300,
+            system=_DETECT_PATTERNS_SYSTEM,
+            messages=[{"role": "user", "content": f"Lines:\n{sample}"}],
+        )
+        raw_response = message.content[0].text.strip()
+        cleaned_response = re.sub(r"```json\s*([\s\S]*?)\s*```", r"\1", raw_response).strip()
+        response_data = json.loads(cleaned_response)
+
+        item_id_str = response_data.get("item_id", "Empty")
+        heading_str = response_data.get("heading", "Empty")
+
+        if item_id_str == "NONE":
+            raise ValueError("LLM could not identify an item ID pattern.")
+        elif item_id_str == "Empty":
+            raise ValueError(f"LLM left the pattern attribute empty: {response_data}")
+        
+        item_id_pattern = re.compile(item_id_str, re.IGNORECASE)
+        logging.info(f"LLM detected item ID pattern: {item_id_str}")
+
+        heading_pattern = None
+        if heading_str not in ("NONE", "Empty"):
+            heading_pattern = re.compile(heading_str, re.IGNORECASE)
+            logging.info(f"LLM detected heading pattern: {heading_str}")
+        else:
+            logging.info("LLM could not identify a heading pattern; headings will not be detected.")
+
+        return item_id_pattern, heading_pattern
+
+    except (json.JSONDecodeError):
+        raise ValueError(f"LLM returned unparseable response: {raw_response}")
+    except re.error as exc:
+        raise ValueError(f"LLM returned invalid regex: {exc}")
+    except ValueError:
+        raise
+    except Exception as e:
+        raise ValueError(f"LLM call failed: {e}")
+    
+
 def _find_repeated_lines(pages: list[dict], threshold: int = 3) -> set[str]:
     """Return stripped lines that appear on `threshold` or more distinct pages."""
+    """s_ln = stripped line"""
     pages_line_list = [
-        {s_ln for ln in p["text"].split('\n') if (s_ln:=ln.strip())} """s_ln = stripped line"""
+        {s_ln for ln in p["text"].split('\n') if (s_ln:=ln.strip())} 
         for p in pages
     ]
     counter: Counter = Counter()
@@ -158,8 +161,7 @@ def _find_repeated_lines(pages: list[dict], threshold: int = 3) -> set[str]:
 def _strip_headers_footers(pages: list[dict]) -> list[dict]:
     """
     Heuristic strip:
-      1. Standalone page-number lines (bare digits only).
-      2. Lines that repeat on 3+ pages (document headers / footers).
+      - Lines that repeat on 3+ pages (document headers / footers).
     """
     repeated = _find_repeated_lines(pages)
     result = []
@@ -167,19 +169,19 @@ def _strip_headers_footers(pages: list[dict]) -> list[dict]:
         cleaned = []
         for ln in page["text"].split('\n'):
             s = ln.strip()
-            if s and s in repeated:        # repeated header / footer
+            if s and s in repeated:
                 continue
             cleaned.append(ln)
         result.append({"page": page["page"], "text": '\n'.join(cleaned)})
     return result
 
 
-def normalize(raw: dict, source_ref: str) -> dict:
+def _normalize(raw: dict, source_ref: str) -> dict:
     # clean once, use everywhere
     cleaned_pages = [{"page": p["page"], "text": _clean_text(p["text"])} for p in raw["pages"]]
     # LLM detects item ID and heading patterns for structuring the document
     stripped_pages = _strip_headers_footers(cleaned_pages)
-    item_id_pattern, heading_pattern = detect_patterns(stripped_pages)
+    item_id_pattern, heading_pattern = _detect_patterns(stripped_pages)
     norm_pages = []
     for p in stripped_pages:
         text = _soft_join(p["text"], item_id_pattern, heading_pattern)
@@ -204,7 +206,7 @@ def save_result(input_path: Path) -> Path:
         raise FileNotFoundError(f"Input not found: {input_path}")
     with open(input_path, encoding="utf-8") as f:
         raw = json.load(f)
-    normalized = normalize(raw, source_ref=input_path.name)
+    normalized = _normalize(raw, source_ref=input_path.name)
     schema = json.loads(_SCHEMA_PATH.read_text(encoding="utf-8"))
     try:
         jsonschema.validate(normalized, schema)

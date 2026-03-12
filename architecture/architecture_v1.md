@@ -89,11 +89,11 @@ Extract raw per-page text from PDF
 
 ## Input
 
-* Born-digital PDF (preferred)
+* Born-digital PDF
 
-## Output → `00_raw_extract.json`
+## Output → `00_raw_extract_<input_file_stem>.json`
 
-@import "../pipeline_root/artifacts/00_raw_extract.json"
+@import "../pipeline_root/schemas/00_raw_extract.schema.v1.json"
 
 
 ## Acceptance Criteria
@@ -113,28 +113,11 @@ Reduce token waste and stabilize downstream parsing.
 
 ## Input
 
-`00_raw_extract.json`
+`00_raw_extract_<input_file_stem>.json`
 
-## Output → `01_normalized_text.json`
+## Output → `01_normalized_<input_file_stem>.json`
 
-```json
-{
-  "source_ref": "00_raw_extract.json",
-  "normalization": {
-    "dehyphenation": true,
-    "ligature_map": true,
-    "line_joining": "soft",
-    "header_footer_strip": "heuristic"
-  },
-  "pages": [
-    { "page": 1, "text": "..." }
-  ],
-  "structural_patterns": {
-    "item_id_pattern": "<regex>",
-    "section_pattern": "<regex>"
-  }
-}
-```
+@import "../pipeline_root/schemas/01_normalized.schema.v1.json"
 
 ## Normalization Rules (V1)
 
@@ -178,29 +161,11 @@ Never merge in a way that breaks:
 
 Avoid wasting money on broken input.
 
-## Input
+## Input → `01_normalized_text_<input_file_stem>.json`
 
-`01_normalized_text.json`
+## Output → `02_after_preflight_<input_file_stem>.json`
 
-## Output → `02_preflight.json`
-
-```json
-{
-  "doc_id": "auto_generated",
-  "checks": {
-    "item_id_count": 42,
-    "unique_item_id_count": 42,
-    "duplicate_item_ids": [],
-    "sections_count": 11,
-    "unique_section_count": 11,
-    "duplicate_sections": [],
-    "possible_table_layout": false
-  },
-  "score": 0.92,
-  "pass": true,
-  "actions": ["send_to_llm_structurer"]
-}
-```
+@import "../pipeline_root/schemas/02_after_preflight.schema.v1.json"
 
 ## Deterministic Checks
 
@@ -224,52 +189,19 @@ Otherwise:
 
 ---
 
-# 7️⃣ Stage (3) LLM Structurer
+# 7️⃣ Stage (3) LLM Chunker
 
 ## Purpose
 
 Convert normalized text into structured specification JSON.
 
-## Output → `03_spec.json`
+## Input → `02_after_preflight_<input_file_stem>.json`
+
+## Output → `03_llm_structured_<input_file_stem>.json`
 
 Schema: `spec.schema.v1`
 
-```json
-{
-  "meta": {
-    "schema": "spec.schema.v1",
-    "doc_id": "arvms_srs_v1_2026-02-19",
-    "title": "...",
-    "version": "1.0",
-    "date": "2026-02-19",
-    "author": "Jair Jimenez",
-    "source": {
-      "filename": "spec.pdf",
-      "page_count": 6
-    }
-  },
-  "structure": {
-    "sections": [
-      {
-        "section_id": "3.1",
-        "title": "Navigation",
-        "content": "Navigation is the blablabla",
-        "path": ["3", "3.1"],
-        "page_range": [2, 2]
-      }
-    ]
-  },
-  "requirements": [
-    {
-      "item_id": "SYS-FUNC-001",
-      "kind": "functional",
-      "content": "...",
-      "section_id": "3.1",
-      "page": 2
-    }
-  ]
-}
-```
+@import "../pipeline_root/schemas/03_llm_structured.schema.v1.json"
 
 ## Structurer Rules
 

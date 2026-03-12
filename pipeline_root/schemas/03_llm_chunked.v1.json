@@ -1,0 +1,117 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "schema_version": "1.0",
+  "description": "LLM Chunker output. Never copy text — locate everything with loc. A post-processor resolves all loc coordinates into text to produce 03_resolved.json for Stage 4.",
+  "type": "object",
+  "required": ["source_ref", "sections", "spec_items"],
+  "additionalProperties": false,
+
+  "definitions": {
+    "loc": {
+      "type": "object",
+      "required": ["page", "line_start", "line_end"],
+      "additionalProperties": false,
+      "description": "Line range in 01_normalized pages[].text split by \\n. line_start is the first line (1), line_end is the last (inclusive) = len(lines).",
+      "properties": {
+        "page":       { "type": "integer", "minimum": 1 },
+        "line_start": { "type": "integer", "minimum": 1 },
+        "line_end":   { "type": "integer", "minimum": 1 }
+      }
+    }
+  },
+
+  "properties": {
+    "source_ref": {
+      "type": "string",
+      "description": "Copy from 01_normalized source_ref."
+    },
+
+    "skip_pages": {
+      "type": "array",
+      "description": "Page numbers (1-based) that contain only navigational content — TOC, index, revision history, cover page. All loc coordinates in sections and spec_items must fall outside these pages.",
+      "items": { "type": "integer", "minimum": 1 }
+    },
+
+    "sections": {
+    "type": "array",
+    "description": "All headings in document order.",
+    "items": {
+      "type": "object",
+      "required": ["section_number", "title", "parent_number", "loc"],
+      "additionalProperties": false,
+      "properties": {
+        "section_number": {
+          "type": ["string", "null"],
+          "description": "Heading number verbatim (e.g. '3.1') if present. Null otherwise."
+        },
+        "item_id": {
+          "type": ["string", "null"],
+          "description": "Spec item ID if the heading has one (e.g. 'SYS-NAV-HDR-001'). Null otherwise."
+        },
+        "title": {
+          "type": "string",
+          "description": "Heading text verbatim. Only field in this schema where copying is allowed — needed to build the section tree before loc resolution."
+        },
+        "parent_number": {
+          "type": ["string", "null"],
+          "description": "item_id of the immediate parent. Null if root."
+        },
+        "loc": {
+          "$ref": "#/definitions/loc",
+          "description": "Full heading block. Use line_end > line_start if the heading wraps lines."
+        }
+      }
+    }
+  },
+
+  "spec_items": {
+    "type": "array",
+    "description": "One entry per requirement ID occurrence. Duplicates are preserved — emit both with their respective loc. The analyzer detects the conflict.",
+    "items": {
+      "type": "object",
+      "required": ["item_id", "parent_number", "loc", "source"],
+      "additionalProperties": false,
+      "properties": {
+        "item_id": {
+          "type": ["string", "null"],
+          "description": "Requirement ID verbatim (e.g. 'SYS-FUNC-001')."
+        },
+        "item_type": {
+          "type": ["string", "null"],
+          "enum": ["requirement", "information", "assumption", "constraint", "goal", "other", null],
+          "description": "(1) Check if an explicit attribute in the item states it, or (2) the item_id prefix clearly implies it. Map to the closest enum value. Null in all other cases."
+        },
+        "classification": {
+          "type": ["string", "null"],
+          "enum": ["functional", "performance", "safety", "security", "interface", "other", null],
+          "description": "(1) Check if an explicit attribute in the item states it, or (2) the item_id prefix clearly implies it. Map to the closest enum value. Null in all other cases."
+        },
+        "source": {
+          "type": "string",
+          "enum": ["inline", "table", "list", "other"],
+          "description": "Layout the item was extracted from. 'table' signals potential extraction noise — Stage 4 should treat content with lower confidence."
+        },
+        "parent_number": {
+          "type": ["string", "null"],
+          "description": "section_number of the immediate containing section."
+        },
+        "loc": {
+          "$ref": "#/definitions/loc",
+          "description": "Full requirement block, from the item_id line to the last line before the next item or heading."
+        },
+        "extra_attrs": {
+          "type": "object",
+          "description": "Any other explicitly labeled sub-fields not covered above. Keys: snake_case of the label as written. Values: loc. Do not invent — only emit if the label is present in the text.",
+          "propertyNames": { "pattern": "^[a-z][a-z0-9_]*$" },
+          "additionalProperties": { "$ref": "#/definitions/loc" }
+        },
+        "flags": {
+          "type": "array",
+          "description": "Uncertainty flags the LLM can attach to an item (e.g. 'ambiguous_boundary', 'possible_table_noise').",
+          "items": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" }
+        }
+      }
+    }
+  }
+  }
+}

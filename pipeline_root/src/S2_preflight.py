@@ -3,11 +3,12 @@ import json
 import logging
 import re
 import sys
+from collections import Counter
 from pathlib import Path
 
 import jsonschema
 
-_SCHEMA_PATH = Path(__file__).parent.parent / "schemas" / "02__after_preflight.schema.v1.json"
+_SCHEMA_PATH = Path(__file__).parent.parent / "schemas" / "02_after_preflight.schema.v1.json"
 
 MIN_REQUIREMENTS = 5
 MIN_SCORE = 0.80
@@ -35,8 +36,8 @@ def _collect_sections(pages: list[dict], pattern: re.Pattern | None) -> list[str
     return sections
 
 
-def _detect_table_layout(pages: list[dict]) -> bool:
-    """Flag if >20% of non-empty lines show tabular alignment (tabs or 3+ consecutive spaces)."""
+def _detect_table_layout(pages: list[dict]) -> tuple[int, int]:
+    """Return (table_layout_lines, total_non_empty_lines) for tabular alignment detection."""
     total = tab_lines = 0
     for page in pages:
         for line in page["text"].split("\n"):
@@ -45,24 +46,32 @@ def _detect_table_layout(pages: list[dict]) -> bool:
             total += 1
             if "\t\t" in line or re.search(r" {3,}", line):
                 tab_lines += 1
-    return total > 0 and (tab_lines / total) > 0.20
+    return tab_lines, total
 
 
 def _compute_score(
-    item_ids: list[str],
+    unique_ids: list[str],
     duplicate_ids: list[str],
+    unique_sections: list[str],
     duplicate_sections: list[str],
-    possible_table_layout: bool,
+    table_layout_lines: int,
+    total_lines: int,
 ) -> float:
     score = 1.0
-    if len(item_ids) < MIN_REQUIREMENTS:
+
+    unique_id_count = len(unique_ids)
+    unique_section_count = len(unique_sections)
+
+    dup_id_ratio = len(duplicate_ids) / unique_id_count if unique_id_count else 0.0
+    dup_section_ratio = len(duplicate_sections) / unique_section_count if unique_section_count else 0.0
+    table_layout_ratio = table_layout_lines / total_lines if total_lines else 0.0
+
+    if unique_id_count < MIN_REQUIREMENTS:
         score -= 0.30
-    if duplicate_ids:
-        score -= min(0.30, 0.05 * len(duplicate_ids))
-    if duplicate_sections:
-        score -= min(0.10, 0.02 * len(duplicate_sections))
-    if possible_table_layout:
-        score -= 0.10
+    score -= 0.30 * dup_id_ratio
+    score -= 0.10 * dup_section_ratio
+    score -= 0.10 * table_layout_ratio
+
     return round(max(0.0, score), 4)
 
 
@@ -70,29 +79,29 @@ def run_preflight(normalized: dict, source_ref: str) -> dict:
     normalization = normalized.get("normalization", {})
     pages = normalized.get("pages", [])
 
-    item_id_str = normalization.get("item_id_pattern")
-    heading_str = normalization.get("heading_pattern")
+    item_id_pattern = normalization.get("item_id_pattern")
+    heading_id_pattern = normalization.get("heading_pattern")
 
-    if not item_id_str:
-        raise ValueError("Normalized input has no item_id_pattern — cannot run preflight.")
-
-    item_id_pattern = re.compile(item_id_str, re.IGNORECASE)
-    heading_pattern = re.compile(heading_str, re.IGNORECASE) if heading_str else None
+    item_id_pattern = re.compile(item_id_pattern, re.IGNORECASE)
+    heading_pattern = re.compile(heading_id_pattern, re.IGNORECASE) if heading_id_pattern else None
 
     item_ids = _collect_items(pages, item_id_pattern)
     sections = _collect_sections(pages, heading_pattern)
 
+    id_counts = Counter(item_ids)
     unique_ids = list(dict.fromkeys(item_ids))
-    duplicate_ids = sorted({id_ for id_ in item_ids if item_ids.count(id_) > 1})
+    duplicate_ids = sorted(id_ for id_, n in id_counts.items() if n > 1)
 
+    section_counts = Counter(sections)
     unique_sections = list(dict.fromkeys(sections))
-    duplicate_sections = sorted({s for s in sections if sections.count(s) > 1})
+    duplicate_sections = sorted(s for s, n in section_counts.items() if n > 1)
 
-    possible_table_layout = _detect_table_layout(pages)
-    score = _compute_score(item_ids, duplicate_ids, duplicate_sections, possible_table_layout)
+    table_layout_lines, total_lines = _detect_table_layout(pages)
+    score = _compute_score(
+        unique_ids, duplicate_ids, unique_sections, duplicate_sections, table_layout_lines, total_lines
+    )
 
-    passed = len(item_ids) >= MIN_REQUIREMENTS and not duplicate_ids and score >= MIN_SCORE
-    actions = ["send_to_llm_structurer"] if passed else ["abort"]
+    passed = len(unique_ids) >= MIN_REQUIREMENTS and score >= MIN_SCORE
 
     return {
         "doc_id": Path(source_ref).stem,
@@ -103,11 +112,11 @@ def run_preflight(normalized: dict, source_ref: str) -> dict:
             "sections_count": len(sections),
             "unique_section_count": len(unique_sections),
             "duplicate_sections": duplicate_sections,
-            "possible_table_layout": possible_table_layout,
+            "table_layout_lines": table_layout_lines,
+            "total_lines": total_lines,
         },
         "score": score,
-        "pass": passed,
-        "actions": actions,
+        "pass": passed
     }
 
 
@@ -141,7 +150,7 @@ if __name__ == "__main__":
             data = json.load(f)
         status = "PASS" if data["pass"] else "FAIL"
         logging.info(f"Saved to {out}")
-        logging.info(f"Preflight {status} — score={data['score']}, ids={data['checks']['item_id_count']}")
+        logging.info(f"Preflight {status} — score={data['score']}, unique_ids={data['checks']['unique_item_id_count']}")
     except (FileNotFoundError, ValueError) as e:
         logging.error(e)
         sys.exit(1)

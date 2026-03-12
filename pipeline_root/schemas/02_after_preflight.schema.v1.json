@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
-  "required": ["doc_id", "checks", "score", "pass", "actions"],
+  "required": ["doc_id", "checks", "score", "pass"],
   "properties": {
     "doc_id": { "type": "string" },
     "checks": {
@@ -13,7 +13,8 @@
         "sections_count",
         "unique_section_count",
         "duplicate_sections",
-        "possible_table_layout"
+        "table_layout_lines",
+        "total_lines"
       ],
       "properties": {
         "item_id_count":        { "type": "integer", "minimum": 0 },
@@ -22,13 +23,13 @@
         "sections_count":       { "type": "integer", "minimum": 0 },
         "unique_section_count": { "type": "integer", "minimum": 0 },
         "duplicate_sections":   { "type": "array", "items": { "type": "string" } },
-        "possible_table_layout":{ "type": "boolean" }
+        "table_layout_lines":   { "type": "integer", "minimum": 0 },
+        "total_lines":          { "type": "integer", "minimum": 0 }
       },
       "additionalProperties": false
     },
-    "score":   { "type": "number", "minimum": 0.0, "maximum": 1.0 },
-    "pass":    { "type": "boolean" },
-    "actions": { "type": "array", "items": { "type": "string" }, "minItems": 1 }
+    "score":   { "type": "number", "minimum": 0, "maximum": 1 },
+    "pass":    { "type": "boolean" }
   },
   "additionalProperties": false
 }

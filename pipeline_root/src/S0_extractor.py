@@ -13,8 +13,8 @@ ROOT_DIR = Path(__file__).parent.parent
 SCHEMA_PATH = ROOT_DIR / "schemas" / "00_raw_extract.schema.v1.json"
 INPUT_DIR   = ROOT_DIR / "input"
 OUTPUT_DIR  = ROOT_DIR / "artifacts"
-MAX_PAGES   = 10
-MAX_CHARS   = 30_000
+MAX_PAGES   = 150
+MAX_CHARS   = 300_000
 
 
 def load_schema() -> dict:

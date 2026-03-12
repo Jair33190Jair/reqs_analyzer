@@ -21,10 +21,15 @@ The fastest path to value is end-to-end validation, not stage-by-stage perfectio
 > Stage specs: `architecture_v1.md`
 
 - [x] **1.1** `S0_extractor.py` — PDF ingestion, page/char limit enforcement
+  - V2 adds: spatial information, reconstruct reading order, detect page structure incl. tables and AI cost estimation
 - [x] **1.2** `S1_normalizer.py` — ligature replacement, dehyphenation, item ID preservation
-- [ ] **1.3** `S2_preflight.py` — gatekeeper logic (ID count, duplicate detection, score threshold)
+  - V2 adds: exact labeled fields (attribute names e.g. test_method, acceptance_criteria, safety_level, rationale, upstram_link, extra_attrs)
+- [x] **1.3** `S2_preflight.py` — gatekeeper logic (ID count, duplicate detection, score threshold)
+  - V2 adds: validate returned pattern (size, matches), validate exact fields' names
 - [ ] **1.4** `S3_llm_chunker.py` — cheap llm chunked text for LLM context limits
+  - V2 adds: strap context blocks to pass to teh analyzer
 - [ ] **1.5** `S4_llm_analyzer.py` — expensive LLM analyzer call and response parsing
+  - V2 adds: context caching for refining spec.
 - [ ] **1.6** `S5_renderer.py` — Jinja2 HTML report generation
 - [ ] **1.7** Decide invocation strategy: how are stages chained?
   Options: a) shell script, b) Python `run_pipeline.py`, c) manual per-stage

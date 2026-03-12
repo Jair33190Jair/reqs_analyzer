@@ -1,0 +1,15 @@
+{
+  "doc_id": "01_normalized_arvms_spec",
+  "checks": {
+    "item_id_count": 42,
+    "unique_item_id_count": 42,
+    "duplicate_item_ids": [],
+    "sections_count": 12,
+    "unique_section_count": 12,
+    "duplicate_sections": [],
+    "table_layout_lines": 0,
+    "total_lines": 138
+  },
+  "score": 1.0,
+  "pass": true
+}
