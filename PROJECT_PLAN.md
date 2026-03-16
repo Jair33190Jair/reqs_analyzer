@@ -21,16 +21,23 @@ The fastest path to value is end-to-end validation, not stage-by-stage perfectio
 > Stage specs: `architecture_v1.md`
 
 - [x] **1.1** `S0_extractor.py` — PDF ingestion, page/char limit enforcement
-  - V2 adds: font, spatial information, reconstruct reading order, detect page structure, incl. tables and AI cost estimation. Haiku suppport for low for messy content.
+  - V2 adds: font, spatial information, reconstruct reading order, detect page structure, incl. tables. Haiku suppport for low for messy content, with warning to user and cost estimation +
+  he needs to confirm.
 - [x] **1.2** `S1_normalizer.py` — ligature replacement, dehyphenation, item ID and heading pattern recognition
   - V2 adds: exact labeled fields (attribute names e.g. test_method, acceptance_criteria, safety_level, rationale, upstram_link, extra_attrs)
-- [x] **1.3** `S2_preflight.py` — gatekeeper logic (ID count, duplicate detection, score threshold)
-  - V2 adds: validate returned pattern (size, matches), validate exact fields' names
-- [ ] **1.4** `S3_llm_chunker.py` — cheap llm chunked text for LLM context limits
-  - V2 adds: strap context blocks to pass to teh analyzer (non-llm), identify context_blocks with script
-- [ ] **1.5** `S4_llm_analyzer.py` — expensive LLM analyzer call and response parsing
+- [x] **1.3** `S2_preflight.py` — gatekeeper logic (ID count, duplicate detection, messy content score threshold)
+  - V2 adds: validate returned patternS (size, matches), validate exact fields' names + ask user
+              if he is okay with the amount of requirements, chapters and total cost of the
+              analysis.
+- [ ] **1.4** `S3_llm_structurer.py` — cheap llm identifies structure (items, attributes and
+    locations).
+  - V2 adds: strap context blocks to pass to the analyzer (non-llm), identify context_blocks with   script
+- [ ] **1.5** `S3_content_resolver.py` — Python extracts full content and validates it. Generates
+    hierarchical IDs in case IDs are not present -> Enable Analyzer ot make references.
+    Prepares optimized version of structured json and passes it to the analyzer
+- [ ] **1.6** `S4_llm_analyzer.py` — Calls the analyzer
   - V2 adds: context caching for refining spec.
-- [ ] **1.6** `S5_renderer.py` — Jinja2 HTML report generation
+- [ ] **1.6** `S6_renderer.py` — Jinja2 HTML report generation
 - [ ] **1.7** Decide invocation strategy: how are stages chained?
   Options: a) shell script, b) Python `run_pipeline.py`, c) manual per-stage
   → write the decision down and implement it

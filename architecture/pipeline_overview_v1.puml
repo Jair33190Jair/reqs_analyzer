@@ -19,6 +19,9 @@ note right
   - Limits: max 10 pages, max 30,000 chars
 end note
 !endif
+note left
+  V2:
+end note
 
 : (S1) Normalizer
   fix ligatures, dehyphenate, join soft lines,

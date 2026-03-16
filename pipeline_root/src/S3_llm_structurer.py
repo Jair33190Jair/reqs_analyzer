@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-Script purpose: LLM-based structural chunker for requirements specification documents.
+Script purpose: LLM-based structurer for requirements specification documents.
                 Identifies section headings and spec items by location (page + line range).
                 No text is copied — all output uses loc coordinates resolved downstream by S4.
-Input:  01_normalized_<name>.json  (S1 output)
-Output: 03_llm_chunked_<name>.json (validated against 03_llm_chunked.v1.json)
+Input:  01_normalized.json   (S1 output)
+Output: 03_llm_structured.json (validated against 03_llm_structured.schema.v1.json)
 """
 # See: ../../architecture/architecture_v1.md
 
@@ -20,7 +20,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-_SCHEMA_PATH = Path(__file__).parent.parent / "schemas" / "03_llm_chunked.v1.json"
+_SCHEMA_PATH = Path(__file__).parent.parent / "schemas" / "03_llm_structured.schema.v1.json"
 _SCHEMA = json.loads(_SCHEMA_PATH.read_text(encoding="utf-8"))
 
 _SYSTEM = """\
@@ -108,9 +108,9 @@ def _call_llm(system_prompt: str, user_message: str) -> tuple[str, dict]:
 
 # --- Mid-level ---
 
-def run_chunker(normalized: dict) -> tuple[str, dict]:
+def run_structurer(normalized: dict) -> tuple[str, dict]:
     """Input: parsed 01_normalized JSON dict.
-    Output: (raw_response, 03_llm_chunked dict) — not yet schema-validated."""
+    Output: (raw_response, 03_llm_structured dict) — not yet schema-validated."""
     normalization = normalized.get("normalization", {})
     source_ref = normalized["source_ref"]
 
@@ -134,7 +134,7 @@ def _resolve_loc(loc: dict, pages_with_lines: dict[int, list[str]]) -> str:
 
 
 def map_content(result: dict, normalized: dict) -> dict:
-    """Input: validated 03_llm_chunked dict and the source 01_normalized dict.
+    """Input: validated 03_llm_structured dict and the source 01_normalized dict.
     Output: enriched copy of result where every section and spec_item gains a
     'content' field — the verbatim text resolved from its loc coordinates."""
     pages_with_lines: dict[int, list[str]] = {
@@ -153,9 +153,9 @@ def map_content(result: dict, normalized: dict) -> dict:
 
 
 def save_result(input_path: Path) -> Path:
-    """Input: path to 01_normalized_<name>.json.
-    Output: path to the written 03_llm_chunked_<name>.json artifact.
-    Always writes 03_llm_response_<name>.txt alongside for debugging.
+    """Input: path to 01_normalized.json.
+    Output: path to the written 03_llm_structured.json artifact.
+    Always writes 03_llm_response.txt alongside for debugging.
     Raises FileNotFoundError or ValueError on any failure."""
     input_path = input_path.resolve()
     if not input_path.exists():
@@ -169,7 +169,7 @@ def save_result(input_path: Path) -> Path:
         )
     raw_path = input_path.parent / f"03_llm_response.txt"
 
-    raw_response, result = run_chunker(normalized)
+    raw_response, result = run_structurer(normalized)
     raw_path.write_text(raw_response, encoding="utf-8")
 
     try:
@@ -181,7 +181,7 @@ def save_result(input_path: Path) -> Path:
         ) from exc
 
     enriched = map_content(result, normalized)
-    output_path = input_path.parent / f"03_llm_chunked.json"
+    output_path = input_path.parent / f"03_llm_structured.json"
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(enriched, f, indent=2, ensure_ascii=False)
     return output_path

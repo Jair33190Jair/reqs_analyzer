@@ -122,6 +122,7 @@ def run_preflight(normalized: dict, source_ref: str) -> dict:
 
     return {
         "doc_id": Path(source_ref).stem,
+        "source_ref": source_ref,
         "checks": {
             "has_item_ids": has_item_ids,
             "item_id_count": len(item_ids),
