@@ -8,29 +8,9 @@ Accepts a born-digital PDF specification, runs it through a deterministic prepro
 
 ## Pipeline Overview
 
-```
-[Input: PDF spec]
-       |
-       v
-  S0 — Extractor          Extract raw per-page text, compute SHA-256, detect format warnings
-       |
-       v
-  S1 — Normalizer         Ligature repair, dehyphenation, soft line joining, header/footer strip
-       |
-       v
-  S2 — Preflight          Requirement ID detection, duplicate check, score gate (LLM cost protection)
-       |
-       v
-  S3 — LLM Structurer     Convert normalized text → structured spec JSON (Claude)
-       |
-       v
-  S4 — LLM Analyzer       Quality review: flags ambiguity, safety gaps, verifiability issues (Claude)
-       |
-       v
-  S5 — Renderer           Produce human-readable HTML/PDF report
-```
+![Pipeline Overview](architecture/pipeline_overview.svg)
 
-Design principle: stages S0–S2 are fully deterministic. LLM is called only if preflight passes.
+> Source: [`pipeline_overview_v1.puml`](architecture/pipeline_overview_v1.puml)
 
 ---
 
@@ -54,9 +34,9 @@ Each stage writes an intermediate artifact to `pipeline_root/artifacts/<project>
 | `00_raw_extract.json`   | S0 Extractor  | Per-page text, SHA-256, warnings      |
 | `01_normalized_text.json` | S1 Normalizer | Cleaned text, normalization metadata |
 | `02_after_preflight.json` | S2 Preflight  | Check results, score, gate decision  |
-| `03_llm_structured.json`  | S3 Structurer | Structured spec (documents, chapters, requirements, info nodes) |
-| `04_llm_analyzed.json`    | S4 Analyzer   | Flags, statistics, AI analysis summary |
-| `05_report.html`          | S5 Renderer   | Human-readable report                |
+| `03_llm_structured.json`  | S3 Structurer | Structured spec with verbatim content resolved from loc coordinates |
+| `04_llm_analyzed.json`    | S5 Analyzer   | Flags, statistics, AI analysis summary |
+| `05_report.html`          | S6 Renderer   | Human-readable report                |
 
 ---
 
@@ -110,10 +90,10 @@ reqs_analyzer/
     src/
       S0_extractor.py     Stage 0 — PDF text extraction
       S1_normalizer.py    Stage 1 — Text normalization
-      S2_preflight.py     Stage 2 — Preflight gate (planned)
-      S3_llm_structurer.py  Stage 3 — LLM structuring (WIP)
-      S4_llm_analyzer.py  Stage 4 — LLM analysis (planned)
-      S5_renderer.py      Stage 5 — Report rendering (planned)
+      S2_preflight.py     Stage 2 — Preflight gate
+      S3_llm_structurer.py  Stage 3 — LLM structuring + content resolution
+      S5_llm_analyzer.py  Stage 5 — LLM analysis (planned)
+      S6_renderer.py      Stage 6 — Report rendering (planned)
       prompts/            LLM prompt definitions
     artifacts/            Intermediate JSON outputs (gitignored in production)
     input/                Input PDF specs — see input/arvms_specs/ for examples
@@ -128,12 +108,12 @@ reqs_analyzer/
 
 | Stage | Name         | Status       |
 |-------|--------------|--------------|
-| S0    | Extractor    | Complete     |
-| S1    | Normalizer   | Complete     |
-| S2    | Preflight    | Planned      |
-| S3    | LLM Structurer | WIP        |
-| S4    | LLM Analyzer | Planned      |
-| S5    | Renderer     | Planned      |
+| S0    | Extractor      | Complete |
+| S1    | Normalizer     | Complete |
+| S2    | Preflight      | Complete |
+| S3    | LLM Structurer | Complete |
+| S5    | LLM Analyzer   | Planned  |
+| S6    | Renderer       | Planned  |
 
 ---
 

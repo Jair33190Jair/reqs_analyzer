@@ -1,0 +1,123 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "schema_version": "1.0",
+  "description": "S3 artifact schema — loc coordinates resolved to verbatim text by map_content().",
+  "type": "object",
+  "required": ["source_ref", "sections", "spec_items"],
+  "additionalProperties": false,
+
+  "definitions": {
+    "loc": {
+      "type": "object",
+      "required": ["page", "line_start", "line_end"],
+      "additionalProperties": false,
+      "description": "Line range in 01_normalized pages[].text split by \\n. line_start and line_end are 1-based and inclusive.",
+      "properties": {
+        "page":       { "type": "integer", "minimum": 1 },
+        "line_start": { "type": "integer", "minimum": 1 },
+        "line_end":   { "type": "integer", "minimum": 1 }
+      }
+    }
+  },
+
+  "properties": {
+    "source_ref": {
+      "type": "string",
+      "description": "Copy from 01_normalized source_ref."
+    },
+
+    "skip_pages": {
+      "type": "array",
+      "description": "Page numbers (1-based) of purely navigational pages — cover, TOC, revision history, index.",
+      "items": { "type": "integer", "minimum": 1 }
+    },
+
+    "sections": {
+      "type": "array",
+      "description": "All headings in document order, each with verbatim content resolved from loc.",
+      "items": {
+        "type": "object",
+        "required": ["hierarchical_number", "title", "loc", "content"],
+        "additionalProperties": false,
+        "properties": {
+          "hierarchical_number": {
+            "type": ["string", "null"],
+            "description": "Section number verbatim from the document (e.g. '3.1'). Null for unnumbered headings."
+          },
+          "level": {
+            "type": ["integer", "null"],
+            "description": "Depth in the heading hierarchy (1 = top-level)."
+          },
+          "item_id": {
+            "type": ["string", "null"],
+            "description": "Spec item ID if the heading line itself carries one. Null otherwise."
+          },
+          "title": {
+            "type": "string",
+            "description": "Heading text verbatim."
+          },
+          "loc": {
+            "$ref": "#/definitions/loc",
+            "description": "Location of the heading line(s)."
+          },
+          "content": {
+            "type": "string",
+            "description": "Verbatim text resolved from loc by map_content()."
+          }
+        }
+      }
+    },
+
+    "spec_items": {
+      "type": "array",
+      "description": "One entry per item or requirement-like statement, each with verbatim content resolved from loc.",
+      "items": {
+        "type": "object",
+        "required": ["item_id", "hierarchical_number", "item_type", "classification", "loc", "source", "content"],
+        "additionalProperties": false,
+        "properties": {
+          "item_id": {
+            "type": ["string", "null"],
+            "description": "Requirement ID verbatim (e.g. 'SYS-FUNC-001'). Null for raw specs without formal IDs."
+          },
+          "hierarchical_number": {
+            "type": ["string", "null"],
+            "description": "Item number verbatim from the document if present. Null if absent."
+          },
+          "item_type": {
+            "type": ["string", "null"],
+            "enum": ["requirement", "information", "assumption", "constraint", "goal", "other", null]
+          },
+          "classification": {
+            "type": ["string", "null"],
+            "enum": ["functional", "performance", "safety", "security", "interface", "other", null]
+          },
+          "source": {
+            "type": "string",
+            "enum": ["inline", "table", "list", "other"],
+            "description": "Layout the item was extracted from."
+          },
+          "loc": {
+            "$ref": "#/definitions/loc",
+            "description": "Full item block location."
+          },
+          "content": {
+            "type": "string",
+            "description": "Verbatim text resolved from loc by map_content()."
+          },
+          "extra_attrs": {
+            "type": "object",
+            "description": "Explicitly labeled sub-fields (e.g. 'Rationale:', 'Note:'). Keys: snake_case. Values: loc.",
+            "propertyNames": { "pattern": "^[a-z][a-z0-9_]*$" },
+            "additionalProperties": { "$ref": "#/definitions/loc" }
+          },
+          "flags": {
+            "type": "array",
+            "description": "Uncertainty flags.",
+            "items": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" }
+          }
+        }
+      }
+    }
+  }
+}

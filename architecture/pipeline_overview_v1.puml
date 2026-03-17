@@ -10,7 +10,8 @@ start
 :receive <doc>.pdf spec; <<$INPUT>>
 
 : (S0) Extractor
-  PDF → raw text per page and file metadata;
+  PDF → raw text per page and file metadata, 
+  page+char limit enforcement;
 !ifdef show_constraints
 note right
   Constraints:
@@ -19,13 +20,10 @@ note right
   - Limits: max 10 pages, max 30,000 chars
 end note
 !endif
-note left
-  V2:
-end note
 
 : (S1) Normalizer
-  fix ligatures, dehyphenate, join soft lines,
-  strip noise, structure respecting item_id_pattern;
+  ligature replacement, dehyphenation, 
+  item ID and heading pattern recognition;
 !ifdef show_constraints
 note right
   Constraints:
@@ -34,7 +32,7 @@ note right
 end note
 !endif
 
-if ((S2) Preflight\n evaluate doc quality incl. section count \n requirements count and formatting noise) then (fail\nscore < 0.80 or < 5 reqs\n emit user guidance)
+if ((S2) Preflight\n gatekeeper logic (ID count, duplicate detection, messy content score threshold)) then (fail\nscore < 0.80 or < 5 reqs\n emit user guidance)
   stop
 endif
 !ifdef show_constraints
@@ -47,7 +45,8 @@ end note
 !endif
 
 : (S3) LLM Structurer
-  text → structured requirements JSON;
+  text → uses llm to identify structure (items, headings and locations) 
+  → python resolves the locations, validates the content and generates internal ids;
 !ifdef show_constraints
 note right
   Constraints:

@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """
 Script purpose: LLM-based structurer for requirements specification documents.
-                Identifies section headings and spec items by location (page + line range).
-                No text is copied — all output uses loc coordinates resolved downstream by S4.
+                Identifies section headings and spec items by location (page + line range),
+                then resolves loc coordinates to verbatim text via map_content().
 Input:  01_normalized.json   (S1 output)
-Output: 03_llm_structured.json (validated against 03_llm_structured.schema.v1.json)
+Output: 03_llm_structured.json
+  - LLM response validated against 03_llm_structured.01_llm_response.schema.v1.json
+  - Enriched artifact validated against 03_llm_structured.02_resolved.schema.v1.json
 """
 # See: ../../architecture/architecture_v1.md
 
@@ -20,8 +22,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-_SCHEMA_PATH = Path(__file__).parent.parent / "schemas" / "03_llm_structured.schema.v1.json"
-_SCHEMA = json.loads(_SCHEMA_PATH.read_text(encoding="utf-8"))
+_SCHEMAS_DIR = Path(__file__).parent.parent / "schemas"
+_LLM_RESPONSE_SCHEMA = json.loads((_SCHEMAS_DIR / "03_llm_structured.01_llm_response.schema.v1.json").read_text(encoding="utf-8"))
+_ARTIFACT_SCHEMA = json.loads((_SCHEMAS_DIR / "03_llm_structured.02_resolved.schema.v1.json").read_text(encoding="utf-8"))
 
 _SYSTEM = """\
 You are an expert requirements document parser.
@@ -117,7 +120,7 @@ def run_structurer(normalized: dict) -> tuple[str, dict]:
     system_prompt = _SYSTEM.format(
         heading_instruction=_heading_instruction(normalization.get("heading_pattern")),
         item_instruction=_item_instruction(normalization.get("item_id_pattern")),
-        schema=json.dumps(_SCHEMA, indent=2),
+        schema=json.dumps(_LLM_RESPONSE_SCHEMA, indent=2),
     )
     raw_response, result = _call_llm(system_prompt, f"SOURCE_REF: {source_ref}\n\n{_format_pages(normalized['pages'])}")
     result["source_ref"] = source_ref  # enforce regardless of what the LLM produced
@@ -173,14 +176,23 @@ def save_result(input_path: Path) -> Path:
     raw_path.write_text(raw_response, encoding="utf-8")
 
     try:
-        jsonschema.validate(result, _SCHEMA)
+        jsonschema.validate(result, _LLM_RESPONSE_SCHEMA)
     except jsonschema.ValidationError as exc:
         raise ValueError(
-            f"Chunker output failed schema validation: {exc.message}\n"
+            f"LLM response failed schema validation: {exc.message}\n"
             f"Raw LLM response saved to: {raw_path}"
         ) from exc
 
     enriched = map_content(result, normalized)
+
+    try:
+        jsonschema.validate(enriched, _ARTIFACT_SCHEMA)
+    except jsonschema.ValidationError as exc:
+        raise ValueError(
+            f"Enriched artifact failed schema validation: {exc.message}\n"
+            f"Raw LLM response saved to: {raw_path}"
+        ) from exc
+
     output_path = input_path.parent / f"03_llm_structured.json"
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(enriched, f, indent=2, ensure_ascii=False)

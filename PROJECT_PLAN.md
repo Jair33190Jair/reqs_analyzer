@@ -20,25 +20,21 @@ The fastest path to value is end-to-end validation, not stage-by-stage perfectio
 > Nothing is implemented yet. Build each stage in pipeline order.
 > Stage specs: `architecture_v1.md`
 
-- [x] **1.1** `S0_extractor.py` — PDF ingestion, page/char limit enforcement
-  - V2 adds: font, spatial information, reconstruct reading order, detect page structure, incl. tables. Haiku suppport for low for messy content, with warning to user and cost estimation +
-  he needs to confirm.
+- [x] **1.1** `S0_extractor.py` — PDF ingestion, page+char limit enforcement
+  - V2 adds: font, spatial information, reconstruct reading order,
+  detect page structure, incl. tables. Haiku suppport for low for messy content, with warning to user and cost estimation. User confirms cost and precision comment.
 - [x] **1.2** `S1_normalizer.py` — ligature replacement, dehyphenation, item ID and heading pattern recognition
   - V2 adds: exact labeled fields (attribute names e.g. test_method, acceptance_criteria, safety_level, rationale, upstram_link, extra_attrs)
 - [x] **1.3** `S2_preflight.py` — gatekeeper logic (ID count, duplicate detection, messy content score threshold)
   - V2 adds: validate returned patternS (size, matches), validate exact fields' names + ask user
               if he is okay with the amount of requirements, chapters and total cost of the
               analysis.
-- [ ] **1.4** `S3_llm_structurer.py` — cheap llm identifies structure (items, attributes and
-    locations).
-  - V2 adds: strap context blocks to pass to the analyzer (non-llm), identify context_blocks with   script
-- [ ] **1.5** `S3_content_resolver.py` — Python extracts full content and validates it. Generates
-    hierarchical IDs in case IDs are not present -> Enable Analyzer ot make references.
-    Prepares optimized version of structured json and passes it to the analyzer
-- [ ] **1.6** `S4_llm_analyzer.py` — Calls the analyzer
+- [x] **1.4** `S3_llm_structurer.py` — cheap LLM identifies structure (items, attributes and locations). Python resolves loc coordinates to verbatim content via map_content(); validated against two schemas: llm_response (internal) and resolved (artifact).
+  - V2 adds: strap context blocks to pass to the analyzer (non-llm), identify context_blocks with script
+- [ ] **1.5** `S5_llm_analyzer.py` — Calls the analyzer
   - V2 adds: context caching for refining spec.
 - [ ] **1.6** `S6_renderer.py` — Jinja2 HTML report generation
-- [ ] **1.7** Decide invocation strategy: how are stages chained?
+- [ ] **1.8** Decide invocation strategy: how are stages chained?
   Options: a) shell script, b) Python `run_pipeline.py`, c) manual per-stage
   → write the decision down and implement it
 
@@ -79,10 +75,10 @@ The fastest path to value is end-to-end validation, not stage-by-stage perfectio
 - [ ] **4.2** S1: ligature replacement, dehyphenation, req ID preservation
 - [ ] **4.3** S2: ID count, duplicate detection, score threshold gate
 
-**LLM stages (S3, S4) — don't unit test with real LLM calls:**
+**LLM stages (S3, S5) — don't unit test with real LLM calls:**
 - [ ] **4.4** Test with a fixture (saved real LLM response) to validate parsing/schema logic only
 
-**Renderer (S5) — one test:**
+**Renderer (S6) — one test:**
 - [ ] **4.5** Known analysis JSON → HTML contains all req IDs and issue counts
 
 **Golden end-to-end criteria (per run):**

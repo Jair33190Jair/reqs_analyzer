@@ -49,10 +49,10 @@ pipeline_run/
     spec.pdf | spec.docx
   artifacts/
     00_raw_extract.json
-    01_normalized_text.json
-    02_preflight.json
-    03_spec.json
-    04_analysis.json
+    01_normalized.json
+    02_after_preflight.json
+    03_llm_structured.json
+    04_llm_analyzed.json
     05_report.html
     05_report.pdf          (optional)
   logs/
@@ -181,13 +181,13 @@ Schema: `spec.schema.v1`
 
 ---
 
-# 8️⃣ Stage (4) LLM Analyzer
+# 8️⃣ Stage (5) LLM Analyzer
 
 ## Purpose
 
 Assess quality, completeness, safety, and sellable insights.
 
-## Output → `04_analysis.json`
+## Output → `04_llm_analyzed.json`
 
 Schema: `analysis.schema.v1`
 
