@@ -1,0 +1,205 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "schema_version": "1.0",
+  "description": "Stage 05 resolved artifact — LLM raw findings enriched by post-processing: stable IDs assigned, dispositions initialized, aggregate stats computed.",
+  "type": "object",
+  "required": ["source_ref", "analysis_meta", "findings", "stats"],
+  "additionalProperties": false,
+
+  "definitions": {
+
+    "affected_item": {
+      "type": "object",
+      "required": ["gen_uid", "role"],
+      "additionalProperties": false,
+      "properties": {
+        "gen_uid": {
+          "type": "string",
+          "pattern": "^[0-9A-F]{8}$",
+          "description": "Content fingerprint from stage 03. Primary join key — position-independent and change-sensitive."
+        },
+        "item_id": {
+          "type": ["string", "null"],
+          "description": "Human-readable ID (e.g. SWRS-1234) if the requirement carries one. Null for raw specs."
+        },
+        "gen_hierarchy_number": {
+          "type": ["string", "null"],
+          "description": "Positional reference (e.g. 'G3.1-002') for human navigation. Informational only — do not use as a join key."
+        },
+        "role": {
+          "type": "string",
+          "enum": ["primary", "conflicting", "related"]
+        }
+      }
+    },
+
+    "disposition": {
+      "description": "Author workflow state. The LLM never writes this block — post-processing initializes it to OPEN.",
+      "type": "object",
+      "required": ["status"],
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["OPEN", "ACCEPTED", "REJECTED", "DEFERRED", "IN_PROGRESS", "RESOLVED", "OBSOLETE"],
+          "description": "OPEN: not yet reviewed. ACCEPTED: confirmed real issue. REJECTED: false positive / won't fix. DEFERRED: postponed. IN_PROGRESS: fix underway. RESOLVED: fixed and verified. OBSOLETE: parent requirement deleted or superseded."
+        },
+        "author_note": {
+          "type": ["string", "null"],
+          "description": "Free-text response or rationale from the author."
+        },
+        "resolved_in_version": {
+          "type": ["string", "null"],
+          "description": "Document version in which the fix was applied."
+        },
+        "reviewed_by": {
+          "type": ["string", "null"]
+        },
+        "review_date": {
+          "type": ["string", "null"],
+          "format": "date"
+        }
+      }
+    },
+
+    "finding": {
+      "type": "object",
+      "required": ["id", "pass", "type", "category", "severity", "affected_items", "description", "confidence", "disposition"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^FND-[0-9A-F]{4}$",
+          "description": "Stable ID assigned by post-processing. Derived from sha256(source_ref + primary gen_uid + category + pass) truncated to 4 hex digits. Never renumbers on re-run."
+        },
+        "pass": {
+          "type": "string",
+          "enum": ["INDIVIDUAL_QUALITY"],
+          "description": "Which analysis pass generated this finding. Extend enum when new passes are introduced."
+        },
+        "type": {
+          "type": "string",
+          "enum": ["FINDING", "QUESTION", "OBSERVATION"]
+        },
+        "category": {
+          "type": "string",
+          "enum": [
+            "AMBIGUITY",
+            "COMPLETENESS",
+            "CONSISTENCY",
+            "FEASIBILITY",
+            "REDUNDANCY",
+            "SAFETY",
+            "SECURITY",
+            "TERMINOLOGY",
+            "TESTABILITY",
+            "TIMING",
+            "TRACEABILITY",
+            "OTHER"
+          ]
+        },
+        "severity": {
+          "type": "string",
+          "enum": ["CRITICAL", "MAJOR", "MINOR", "INFO"]
+        },
+        "affected_items": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/definitions/affected_item" }
+        },
+        "description": {
+          "type": "string"
+        },
+        "recommendation": {
+          "type": ["string", "null"]
+        },
+        "reference": {
+          "type": ["string", "null"]
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "disposition": {
+          "$ref": "#/definitions/disposition"
+        }
+      }
+    },
+
+    "severity_counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "CRITICAL": { "type": "integer", "minimum": 0 },
+        "MAJOR":    { "type": "integer", "minimum": 0 },
+        "MINOR":    { "type": "integer", "minimum": 0 },
+        "INFO":     { "type": "integer", "minimum": 0 }
+      }
+    },
+
+    "type_counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "FINDING":     { "type": "integer", "minimum": 0 },
+        "QUESTION":    { "type": "integer", "minimum": 0 },
+        "OBSERVATION": { "type": "integer", "minimum": 0 }
+      }
+    }
+
+  },
+
+  "properties": {
+    "source_ref": {
+      "type": "string",
+      "description": "Filename of the stage-03 resolved artifact this analysis was run against."
+    },
+
+    "analysis_meta": {
+      "type": "object",
+      "required": ["pass", "model", "prompt_version", "timestamp"],
+      "additionalProperties": false,
+      "properties": {
+        "pass": {
+          "type": "string",
+          "enum": ["INDIVIDUAL_QUALITY"]
+        },
+        "model": {
+          "type": "string",
+          "description": "Model ID used (e.g. 'claude-sonnet-4-6')."
+        },
+        "prompt_version": {
+          "type": "string",
+          "description": "Version tag of the prompt template. Allows correlating findings to prompt changes."
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "doc_version": {
+          "type": ["string", "null"],
+          "description": "Document revision/version string extracted from the source, if available."
+        }
+      }
+    },
+
+    "findings": {
+      "type": "array",
+      "description": "All findings in document order (sorted by primary affected_item gen_hierarchy_number).",
+      "items": { "$ref": "#/definitions/finding" }
+    },
+
+    "stats": {
+      "type": "object",
+      "required": ["total", "by_severity", "by_type"],
+      "additionalProperties": false,
+      "description": "Aggregate counts over all findings. Computed by post-processing, not the LLM.",
+      "properties": {
+        "total":       { "type": "integer", "minimum": 0 },
+        "by_severity": { "$ref": "#/definitions/severity_counts" },
+        "by_type":     { "$ref": "#/definitions/type_counts" }
+      }
+    }
+  }
+}

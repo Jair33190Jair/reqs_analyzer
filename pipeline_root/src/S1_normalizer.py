@@ -59,7 +59,7 @@ def _detect_patterns(pages: list[dict]) -> tuple[re.Pattern | None, re.Pattern |
     """
     mid = len(pages) // 2
     sample_lines = []
-    for page in pages[max(0, mid - 1):mid + 2]:
+    for page in pages[mid - 5: mid + 5]:
         for ln in page["text"].split('\n'):
             s = ln.strip()
             if s:

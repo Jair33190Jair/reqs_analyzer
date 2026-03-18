@@ -31,9 +31,9 @@ The fastest path to value is end-to-end validation, not stage-by-stage perfectio
               analysis.
 - [x] **1.4** `S3_llm_structurer.py` — cheap LLM identifies structure (items, attributes and locations). Python resolves loc coordinates to verbatim content via map_content() and generates internal ids; validated against two schemas: llm_response (internal) and resolved (artifact).
   - V2 adds: strap context blocks to pass to the analyzer (non-llm), identify context_blocks with script
-- [ ] **1.5** `S5_llm_analyzer.py` — Calls the analyzer
-  - V2 adds: context caching for refining spec.
-- [ ] **1.6** `S6_renderer.py` — Jinja2 HTML report generation
+- [ ] **1.5** `S4_llm_analyzer.py` — Calls the analyzer
+  - V2 adds: context caching for refining spec. Three independent identifiers govern change classification: item_id, gen_uid, gen_hierarchy_number -> new, content_changed,position_changed,unchanged,deleted then does different reactions on the anlyzer
+- [ ] **1.6** `S5_renderer.py` — Jinja2 HTML report generation
 - [ ] **1.8** Decide invocation strategy: how are stages chained?
   Options: a) shell script, b) Python `run_pipeline.py`, c) manual per-stage
   → write the decision down and implement it

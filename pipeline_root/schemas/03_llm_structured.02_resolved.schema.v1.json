@@ -38,10 +38,10 @@
       "description": "All headings in document order, each with verbatim content resolved from loc.",
       "items": {
         "type": "object",
-        "required": ["hierarchical_number", "title", "loc", "content", "internal_id"],
+        "required": ["spec_hierarchy_number", "title", "loc", "content", "gen_hierarchy_number", "gen_uid"],
         "additionalProperties": false,
         "properties": {
-          "hierarchical_number": {
+          "spec_hierarchy_number": {
             "type": ["string", "null"],
             "description": "Section number verbatim from the document (e.g. '3.1'). Null for unnumbered headings."
           },
@@ -65,10 +65,15 @@
             "type": "string",
             "description": "Verbatim text resolved from loc by map_content()."
           },
-          "internal_id": {
+          "gen_hierarchy_number": {
             "type": "string",
-            "description": "Generated stable reference. 'G' prefix + hierarchical number (from doc or inferred from level/position). E.g. 'G3.2'. Always present.",
+            "description": "Generated positional reference. 'G' prefix + spec_hierarchy_number (from doc or inferred from level/position). E.g. 'G3.2'. Always present. Changes if the section is renumbered or moved.",
             "pattern": "^G[0-9]+(\\.[0-9]+)*$"
+          },
+          "gen_uid": {
+            "type": "string",
+            "description": "Content fingerprint: sha256(normalize(content))[:8 hex uppercase]. Position-independent — survives section renumbering and moves. Changes when and only when the heading text changes.",
+            "pattern": "^[0-9A-F]{8}$"
           }
         }
       }
@@ -79,14 +84,14 @@
       "description": "One entry per item or requirement-like statement, each with verbatim content resolved from loc.",
       "items": {
         "type": "object",
-        "required": ["item_id", "hierarchical_number", "item_type", "classification", "loc", "source", "content", "internal_id"],
+        "required": ["item_id", "spec_hierarchy_number", "item_type", "classification", "loc", "source", "content", "gen_hierarchy_number", "gen_uid"],
         "additionalProperties": false,
         "properties": {
           "item_id": {
             "type": ["string", "null"],
             "description": "Requirement ID verbatim (e.g. 'SYS-FUNC-001'). Null for raw specs without formal IDs."
           },
-          "hierarchical_number": {
+          "spec_hierarchy_number": {
             "type": ["string", "null"],
             "description": "Item number verbatim from the document if present. Null if absent."
           },
@@ -111,10 +116,15 @@
             "type": "string",
             "description": "Verbatim text resolved from loc by map_content()."
           },
-          "internal_id": {
+          "gen_hierarchy_number": {
             "type": "string",
-            "description": "Generated stable reference. 'G' prefix + parent section number + 3-digit sequential counter within that section. E.g. 'G3.2-001'. Always present.",
+            "description": "Generated positional reference. 'G' prefix + parent section number + 3-digit sequential counter within that section. E.g. 'G3.2-001'. Always present. Changes if the item moves sections or the section is renumbered.",
             "pattern": "^G[0-9]+(\\.[0-9]+)*-[0-9]{3}$"
+          },
+          "gen_uid": {
+            "type": "string",
+            "description": "Content fingerprint: sha256(normalize(content))[:8 hex uppercase]. Position-independent — survives section moves and renumbering. Changes when and only when the requirement text changes. Used as stable identity when item_id is null; used for change detection when item_id is present.",
+            "pattern": "^[0-9A-F]{8}$"
           },
           "extra_attrs": {
             "type": "object",

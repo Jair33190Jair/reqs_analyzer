@@ -10,6 +10,7 @@ Output: 03_llm_structured.json
 """
 # See: ../../architecture/architecture_v1.md
 
+import hashlib
 import json
 import logging
 import re
@@ -158,11 +159,18 @@ def _resolve_loc(loc: dict, pages_with_lines: dict[int, list[str]]) -> str:
     return "\n".join(parts)
 
 
-def _section_internal_id(section: dict, level_counters: dict[int, int]) -> str:
+def _gen_uid(content: str) -> str:
+    """Input: verbatim content string.
+    Output: 8 hex uppercase chars — sha256 of whitespace-normalised content."""
+    normalised = " ".join(content.split())
+    return hashlib.sha256(normalised.encode()).hexdigest()[:8].upper()
+
+
+def _section_gen_hierarchy_number(section: dict, level_counters: dict[int, int]) -> str:
     """Input: a section dict and the running level-counter state (mutated in place).
-    Output: internal_id string of the form 'G{n1}.{n2}...' derived from hierarchical_number
-    if present, otherwise computed from level and position."""
-    hier = section.get("hierarchical_number")
+    Output: gen_hierarchy_number string of the form 'G{n1}.{n2}...' derived from
+    spec_hierarchy_number if present, otherwise computed from level and position."""
+    hier = section.get("spec_hierarchy_number")
     if hier:
         return f"G{hier}"
     level = section.get("level") or 1
@@ -173,20 +181,20 @@ def _section_internal_id(section: dict, level_counters: dict[int, int]) -> str:
     return "G" + ".".join(str(level_counters.get(l, 1)) for l in range(1, level + 1))
 
 
-def generate_internal_ids(enriched: dict) -> dict:
+def generate_gen_ids(enriched: dict) -> dict:
     """Input: enriched dict (output of map_content — sections and spec_items have 'content').
-    Output: copy with 'internal_id' added to every section and spec_item.
-    Section IDs: G{hierarchical_number} or G{inferred from level/position}.
-    Spec item IDs: G{parent_section_number}-{NNN} (3-digit, sequential per section)."""
+    Output: copy with 'gen_hierarchy_number' and 'gen_uid' added to every section and spec_item.
+    Section gen_hierarchy_number: G{spec_hierarchy_number} or G{inferred from level/position}.
+    Spec item gen_hierarchy_number: G{parent_section_number}-{NNN} (3-digit, sequential per section)."""
     level_counters: dict[int, int] = {}
     sections_with_ids = []
     for s in enriched.get("sections", []):
-        internal_id = _section_internal_id(s, level_counters)
-        sections_with_ids.append({**s, "internal_id": internal_id})
+        gen_hierarchy_number = _section_gen_hierarchy_number(s, level_counters)
+        sections_with_ids.append({**s, "gen_hierarchy_number": gen_hierarchy_number, "gen_uid": _gen_uid(s["content"])})
 
-    # Build sorted (page, line_start, internal_id) for parent lookup — use start page
+    # Build sorted (page, line_start, gen_hierarchy_number) for parent lookup — use start page
     section_positions = sorted(
-        (s["loc"]["page"], s["loc"]["line_start"], s["internal_id"])
+        (s["loc"]["page"], s["loc"]["line_start"], s["gen_hierarchy_number"])
         for s in sections_with_ids
     )
 
@@ -200,8 +208,8 @@ def generate_internal_ids(enriched: dict) -> dict:
             if (s_page, s_line) <= (page, line):
                 parent_id = s_id
         item_counters[parent_id] = item_counters.get(parent_id, 0) + 1
-        internal_id = f"{parent_id}-{item_counters[parent_id]:03d}"
-        spec_items_with_ids.append({**item, "internal_id": internal_id})
+        gen_hierarchy_number = f"{parent_id}-{item_counters[parent_id]:03d}"
+        spec_items_with_ids.append({**item, "gen_hierarchy_number": gen_hierarchy_number, "gen_uid": _gen_uid(item["content"])})
 
     return {**enriched, "sections": sections_with_ids, "spec_items": spec_items_with_ids}
 
@@ -225,7 +233,7 @@ def map_content(result: dict, pages_with_lines: dict[int, list[str]]) -> dict:
 
 def validate_resolved(enriched: dict, pages_with_lines: dict[int, list[str]]) -> None:
     """Input: fully enriched artifact dict and page→lines map from the normalized source.
-    Raises ValueError with the offending internal_id if any semantic check fails.
+    Raises ValueError with the offending gen_hierarchy_number if any semantic check fails.
     Checks (in order):
       1. content non-empty for every section and spec_item
       2. loc.line_start ≤ loc.line_end for every loc (items, sections, extra_attrs)
@@ -256,13 +264,13 @@ def validate_resolved(enriched: dict, pages_with_lines: dict[int, list[str]]) ->
             raise ValueError(f"{ref}: line_start ({loc['line_start']}) > line_end ({loc['line_end']}) on same page")
 
     for s in enriched.get("sections", []):
-        ref = s.get("internal_id", "section?")
+        ref = s.get("gen_hierarchy_number", "section?")
         if not s.get("content", "").strip():
             raise ValueError(f"{ref}: content is empty after loc resolution")
         _check_loc_bounds(s["loc"], ref)
 
     for item in enriched.get("spec_items", []):
-        ref = item.get("internal_id", "item?")
+        ref = item.get("gen_hierarchy_number", "item?")
         if not item.get("content", "").strip():
             raise ValueError(f"{ref}: content is empty after loc resolution")
         _check_loc_bounds(item["loc"], ref)
@@ -319,7 +327,7 @@ def save_result(input_path: Path) -> Path:
     pages_with_lines: dict[int, list[str]] = {
         p["page"]: p["text"].split("\n") for p in normalized["pages"]
     }
-    enriched = generate_internal_ids(map_content(result, pages_with_lines))
+    enriched = generate_gen_ids(map_content(result, pages_with_lines))
 
     try:
         validate_resolved(enriched, pages_with_lines)

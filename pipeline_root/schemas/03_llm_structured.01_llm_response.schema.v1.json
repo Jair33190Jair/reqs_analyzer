@@ -38,10 +38,10 @@
       "description": "All headings in document order.",
       "items": {
         "type": "object",
-        "required": ["hierarchical_number", "title", "loc"],
+        "required": ["spec_hierarchy_number", "title", "loc"],
         "additionalProperties": false,
         "properties": {
-          "hierarchical_number": {
+          "spec_hierarchy_number": {
             "type": ["string", "null"],
             "description": "Section number verbatim from the document (e.g. '3.1'). Null for unnumbered headings."
           },
@@ -70,14 +70,14 @@
       "description": "One entry per requirement or requirement-like statement. For docs with IDs, one entry per ID occurrence (duplicates preserved). For raw specs, one entry per distinct logical statement.",
       "items": {
         "type": "object",
-        "required": ["item_id", "hierarchical_number", "item_type", "classification", "loc", "source"],
+        "required": ["item_id", "spec_hierarchy_number", "item_type", "classification", "loc", "source"],
         "additionalProperties": false,
         "properties": {
           "item_id": {
             "type": ["string", "null"],
             "description": "Requirement ID verbatim (e.g. 'SYS-FUNC-001'). Null for raw specs without formal IDs."
           },
-          "hierarchical_number": {
+          "spec_hierarchy_number": {
             "type": ["string", "null"],
             "description": "Item number verbatim from the document (e.g. '3.1.2') if present. Null if the item has no explicit number."
           },
