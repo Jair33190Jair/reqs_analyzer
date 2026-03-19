@@ -3,6 +3,7 @@ import json
 import re
 import logging
 import sys
+import time
 from collections import Counter
 from pathlib import Path
 
@@ -70,6 +71,7 @@ def _detect_patterns(pages: list[dict]) -> tuple[re.Pattern | None, re.Pattern |
     raw_response = ""
     try:
         client = anthropic.Anthropic()
+        t0 = time.monotonic()
         message = client.messages.create(
             model=_LLM_MODEL,
             max_tokens=_LLM_MAX_TOKENS,
@@ -77,8 +79,12 @@ def _detect_patterns(pages: list[dict]) -> tuple[re.Pattern | None, re.Pattern |
             messages=[{"role": "user", "content": f"Lines:\n{sample}"}],
         )
         usage = message.usage
-        cost = get_cost(_LLM_MODEL, usage.input_tokens, usage.output_tokens)
-        logging.info(f"[S1 LLM] {usage.input_tokens} in / {usage.output_tokens} out — ${cost:.6f}")
+        elapsed = time.monotonic() - t0
+        try:
+            cost = f"${get_cost(_LLM_MODEL, usage.input_tokens, usage.output_tokens):.6f}"
+        except Exception:
+            cost = "cost unknown"
+        logging.info(f"[S1 LLM] {usage.input_tokens} in / {usage.output_tokens} out — {cost} — {elapsed:.1f}s")
         raw_response = message.content[0].text.strip()
         cleaned_response = re.sub(r"```json\s*([\s\S]*?)\s*```", r"\1", raw_response).strip()
         response_data = json.loads(cleaned_response)

@@ -15,6 +15,7 @@ import json
 import logging
 import re
 import sys
+import time
 from pathlib import Path
 
 import anthropic
@@ -95,9 +96,12 @@ def _format_pages(pages: list[dict]) -> str:
     return "\n\n".join(parts)
 
 
-def _log_usage(input_tokens: int, output_tokens: int) -> None:
-    cost = get_cost(_LLM_MODEL, input_tokens, output_tokens)
-    logging.info(f"[S3 LLM] {input_tokens} in / {output_tokens} out — ${cost:.6f}")
+def _log_usage(input_tokens: int, output_tokens: int, elapsed: float) -> None:
+    try:
+        cost = f"${get_cost(_LLM_MODEL, input_tokens, output_tokens):.6f}"
+    except Exception:
+        cost = "cost unknown"
+    logging.info(f"[S3 LLM] {input_tokens} in / {output_tokens} out — {cost} — {elapsed:.1f}s")
 
 
 def _call_llm(system_prompt: str, user_message: str) -> tuple[str, dict]:
@@ -105,13 +109,14 @@ def _call_llm(system_prompt: str, user_message: str) -> tuple[str, dict]:
     Output: (raw_response, parsed JSON dict).
     Raises ValueError on unparseable response."""
     client = anthropic.Anthropic()
+    t0 = time.monotonic()
     message = client.messages.create(
         model=_LLM_MODEL,
         max_tokens=_LLM_MAX_TOKENS,
         system=system_prompt,
         messages=[{"role": "user", "content": user_message}],
     )
-    _log_usage(message.usage.input_tokens, message.usage.output_tokens)
+    _log_usage(message.usage.input_tokens, message.usage.output_tokens, time.monotonic() - t0)
     raw_response = message.content[0].text.strip()
     cleaned = re.sub(r"```json\s*([\s\S]*?)\s*```", r"\1", raw_response).strip()
     try:
@@ -308,8 +313,8 @@ def save_result(input_path: Path) -> Path:
         normalized = json.load(f)
     if "pages" not in normalized or "normalization" not in normalized:
         raise ValueError(
-            f"Expected a 01_normalized_*.json file (S1 output), got: {input_path.name}\n"
-            "Usage: python S3_llm_chunker.py <path_to_01_normalized_*.json>"
+            f"Expected a 01_normalized.json file (S1 output), got: {input_path.name}\n"
+            "Usage: python S3_llm_chunker.py <path_to_01_normalized.json>"
         )
     raw_path = input_path.parent / f"03_llm_response.txt"
 

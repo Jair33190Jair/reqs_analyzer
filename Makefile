@@ -15,6 +15,9 @@ s2:
 s3:
 	python3 $(SRC)/S3_llm_structurer.py $(ARTIFACTS)/01_normalized.json
 
-pipeline: s0 s1 s2 s3
+s4:
+	python3 $(SRC)/S4_llm_analyzer.py $(ARTIFACTS)/03_llm_structured.json
 
-.PHONY: s0 s1 s2 s3 pipeline
+pipeline: s0 s1 s2 s3 s4
+
+.PHONY: s0 s1 s2 s3 s4 pipeline

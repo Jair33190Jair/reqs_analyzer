@@ -5,8 +5,8 @@
     "ligature_map": true,
     "line_joining": "none",
     "header_footer_strip": "heuristic",
-    "item_id_pattern": "^[A-Z]+-[A-Z]+-[0-9]{3}$",
-    "heading_pattern": "^[0-9]+([.][0-9]+)*[ ]+[^ ].*$"
+    "item_id_pattern": "^[A-Z]+-[A-Z]+-[0-9]+$",
+    "heading_pattern": "^[0-9]+([.][0-9]+)?[ ]+[^ ].*$"
   },
   "pages": [
     {

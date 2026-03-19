@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "schema_version": "1.0",
-  "description": "Raw LLM output for the Individual Requirement Quality analysis pass. IDs and stats are NOT present — assigned by post-processing into 05_llm_analyzed.02_resolved.",
+  "description": "Raw LLM output for the Individual Requirement Quality analysis pass. IDs and stats are NOT present — assigned by post-processing into 04_llm_analyzed.02_resolved.",
   "type": "object",
   "required": ["findings"],
   "additionalProperties": false,
@@ -50,9 +50,11 @@
           "type": "string",
           "enum": [
             "AMBIGUITY",
+            "ATOMICITY",
             "COMPLETENESS",
             "CONSISTENCY",
             "FEASIBILITY",
+            "OVERCONSTRAINT",
             "REDUNDANCY",
             "SAFETY",
             "SECURITY",

@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "schema_version": "1.0",
-  "description": "Stage 05 resolved artifact — LLM raw findings enriched by post-processing: stable IDs assigned, dispositions initialized, aggregate stats computed.",
+  "description": "Stage 04 resolved artifact — LLM raw findings enriched by post-processing: stable IDs assigned, dispositions initialized, aggregate stats computed.",
   "type": "object",
   "required": ["source_ref", "analysis_meta", "findings", "stats"],
   "additionalProperties": false,
@@ -64,13 +64,13 @@
 
     "finding": {
       "type": "object",
-      "required": ["id", "pass", "type", "category", "severity", "affected_items", "description", "confidence", "disposition"],
+      "required": ["gen_find_id", "pass", "type", "category", "severity", "affected_items", "description", "confidence", "disposition"],
       "additionalProperties": false,
       "properties": {
-        "id": {
+        "gen_find_id": {
           "type": "string",
-          "pattern": "^FND-[0-9A-F]{4}$",
-          "description": "Stable ID assigned by post-processing. Derived from sha256(source_ref + primary gen_uid + category + pass) truncated to 4 hex digits. Never renumbers on re-run."
+          "pattern": "^GF-[0-9A-F]{6}$",
+          "description": "Stable finding ID assigned by post-processing. sha256(source_ref + primary_item_id_or_gen_uid + category + pass)[:6 hex uppercase]. item_id is used when present, gen_uid otherwise. gen_hierarchy_number is intentionally excluded — a position-only change must not invalidate a finding's identity."
         },
         "pass": {
           "type": "string",
@@ -85,9 +85,11 @@
           "type": "string",
           "enum": [
             "AMBIGUITY",
+            "ATOMICITY",
             "COMPLETENESS",
             "CONSISTENCY",
             "FEASIBILITY",
+            "OVERCONSTRAINT",
             "REDUNDANCY",
             "SAFETY",
             "SECURITY",

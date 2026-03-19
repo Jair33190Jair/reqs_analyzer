@@ -132,9 +132,9 @@
             "propertyNames": { "pattern": "^[a-z][a-z0-9_]*$" },
             "additionalProperties": { "$ref": "#/definitions/loc" }
           },
-          "flags": {
+          "extraction_warnings": {
             "type": "array",
-            "description": "Uncertainty flags.",
+            "description": "Extraction uncertainty warnings. Use 'ambiguous_boundary' if unsure where the item ends; 'possible_table_noise' if extracted from a table.",
             "items": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" }
           }
         }
