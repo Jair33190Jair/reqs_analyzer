@@ -2,6 +2,13 @@
 !define sub_modules_path ../../../../
 !include sub_modules_path/projects/templates/plantuml/activity_diagram.puml
 '!define show_constraints
+'!define show_notes
+'!define show_all
+
+!ifdef show_all
+!define show_constraints
+!define show_notes
+!endif
 
 title AI Requirements Analyzer — Pipeline Overview
 
@@ -29,7 +36,7 @@ end note
     2. LLM Identify item id and heading patterns
   O: 01_normalized.json;
 
-if ((S2) Preflight\n I: 01_normalized_text.json\n  1.Computes: ID count, duplicate count, messy content score \n O: 02_after_preflight) then (fail\nscore < 0.80 or < 5 reqs\n emit user guidance)
+if ((S2) Preflight\n I: 01_normalized.json\n  1.Computes: ID count, duplicate count, extraction-quality score \n O: pass/fail status) then (fail\nscore < 0.80 or < 5 reqs\n emit user guidance)
   stop
 endif
 !ifdef show_constraints
@@ -43,11 +50,11 @@ end note
 
 : (S3) LLM Structurer
   I: 01_normalized.json
-    1. Asks LLM to identify and provide object locations
+    1. Asks LLM to identify and provide item locations
         (e.g. id: REQ-123 loc: [page: 1, lines: 3-6])
     2. Python resolves the locations, and validates the content
-    3. Python computes object's hierarchy number 
-    4. Python computs unique ids for change tracking
+    3. Python computes items' hierarchy number 
+    4. Python computes unique ids for change tracking
   O: 03_llm_structured.json;
 !ifdef show_notes
 note right
@@ -59,16 +66,17 @@ end note
 !endif
 
 : (S4) LLM Analyzer
-  I: 01_normalized.json, 03_llm_structured.json
-    1. Python resolves objects' locations
-    2. Python extracts only relevant objects and attributes
-    3. LLM analyzes V1: Requirements quality review, provides flags
-    4. Python: Collects, flags, metadata and provides report
+  I: 03_llm_structured.json
+  I: 01_normalized.json (full text for location resolution)
+    1. Python resolves items' locations
+    2. Python prepares relevant items and attributes for Pass 3
+    3. LLM: Pass 3 - Requirements quality review
+    4. Python: Collects flags, metadata and provides report
   O: 04_llm_analyzed.json;
 
 : (S5) Renderer
   I: 04_llm_analyzed.json
-    1. Parses analysis report and generates cute html
+    1. Generates single-page HTML dashboard
   O: 05_flag_report.html;
 !ifdef show_constraints
 note right

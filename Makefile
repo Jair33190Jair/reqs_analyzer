@@ -20,4 +20,7 @@ s4:
 
 pipeline: s0 s1 s2 s3 s4
 
-.PHONY: s0 s1 s2 s3 s4 pipeline
+render-arch:
+	plantuml -tpng architecture/pipeline_overview_v1.puml
+
+.PHONY: s0 s1 s2 s3 s4 pipeline render-arch
